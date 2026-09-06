@@ -65,7 +65,7 @@ só carrega identidade, autoridade, fronteiras e padrão de qualidade.
 
 **Maton e Zernio como skills, não como servidores MCP.** Tool MCP entra no schema de toda
 chamada e custa tokens por mensagem mesmo sem uso; skill só carrega quando o pedido é sobre
-aquilo. As duas skills (`jcarlosamorim/hermes-maton` v0.2.0, `jcarlosamorim/hermes-zernio`
+aquilo. As duas skills (`AgentsFlix/hermes-maton` v0.2.0, `AgentsFlix/hermes-zernio`
 v1.0.0) fazem descoberta em modo leitura e pedem aprovação antes de escrever. Instalação por
 tag fixa, e o critério de aceite é passar no scanner do Hermes numa instância limpa sem
 `--force` (medido na v0.21.0 em 06/09/2026: as duas passam).

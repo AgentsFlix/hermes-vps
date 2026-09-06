@@ -8,8 +8,8 @@
 source "$(dirname "$0")/lib.sh"
 
 # Fixados em tag: aula reproduzível. Para atualizar, troque a tag aqui e rode aplicar de novo.
-MATON_SKILL_URL="${MATON_SKILL_URL:-https://raw.githubusercontent.com/jcarlosamorim/hermes-maton/v0.2.0/skills/integrations/maton-operations/SKILL.md}"
-ZERNIO_SKILL_URL="${ZERNIO_SKILL_URL:-https://raw.githubusercontent.com/jcarlosamorim/hermes-zernio/v1.0.0/skills/integrations/zernio-operations/SKILL.md}"
+MATON_SKILL_URL="${MATON_SKILL_URL:-https://raw.githubusercontent.com/AgentsFlix/hermes-maton/v0.2.0/skills/integrations/maton-operations/SKILL.md}"
+ZERNIO_SKILL_URL="${ZERNIO_SKILL_URL:-https://raw.githubusercontent.com/AgentsFlix/hermes-zernio/v1.0.0/skills/integrations/zernio-operations/SKILL.md}"
 
 valida_chave() { # valida_chave NOME  -> 0 presente e válida, 2 ausente, 1 inválida
     local v; v="$(campo_de "$CHAVES_ARQ" "$1")"
