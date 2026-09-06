@@ -2,8 +2,8 @@
 
 Um harness: o repositório que o **seu agente** (Claude Code, Codex ou outro) lê e executa para
 instalar o [Hermes Agent](https://github.com/NousResearch/hermes-agent) numa VPS, com painel web
-protegido por senha, HTTPS automático e uma página de acesso no seu Desktop. Você entra com o IP
-da VPS, digita a senha root uma vez no seu terminal e escolhe a senha do painel. O resto é dele.
+protegido por senha, HTTPS automático e uma página de acesso no seu Desktop. Você cola o acesso
+SSH da VPS, preenche um arquivo com as senhas e responde "Feito". O resto é dele.
 
 Espelha uma instalação real em produção (Hermes num EasyPanel da Hostinger), sem o EasyPanel:
 Docker, a imagem oficial `nousresearch/hermes-agent:latest`, Caddy na frente e o próprio
@@ -27,19 +27,20 @@ cd hermes-vps
 claude        # ou: codex
 ```
 
-E diga ao agente: **"instala o Hermes na minha VPS"**. Ele lê `AGENTS.md` e segue as cinco
-fases, parando só para o que é seu: o IP, o `ssh-copy-id` (senha root no seu terminal) e a senha
-do painel (num arquivo que ele abre para você).
+O agente lê `AGENTS.md` e já começa perguntando o acesso SSH da VPS (a linha `ssh root@IP` do
+hPanel). Depois ele abre um arquivo na sua tela: você cola a senha root, escolhe a senha do
+painel, salva e responde **Feito**. A partir daí ele faz tudo: chave SSH, Docker, Hermes, HTTPS,
+verificação e a pasta `Meu Hermes` no seu Desktop.
 
 Quer fazer à mão? É a mesma sequência:
 
 ```bash
-bash harness/00-preflight.sh      # confere tudo e decide o endereço https
-bash harness/05-senha.sh criar    # abre o arquivo; digite a senha do painel; salve
-bash harness/05-senha.sh validar
-bash harness/10-instalar.sh       # Docker + Hermes + Caddy na VPS
-bash harness/20-verificar.sh      # só passa com o login ligado e o https válido
-bash harness/30-desktop.sh        # pasta "Meu Hermes" no seu Desktop
+bash harness/configurar.sh "ssh root@IP"   # grava o config e abre o arquivo das senhas
+bash harness/05-senha.sh validar           # confere sem mostrar
+bash harness/00-preflight.sh               # entra com a senha, autoriza a chave, decide o https
+bash harness/10-instalar.sh                # Docker + Hermes + Caddy na VPS
+bash harness/20-verificar.sh               # só passa com o login ligado e o https válido
+bash harness/30-desktop.sh                 # pasta "Meu Hermes" no seu Desktop
 ```
 
 ## O que fica pronto
@@ -58,6 +59,7 @@ abre por túnel SSH, com um atalho de dois cliques no Desktop.
 ```text
 AGENTS.md              o harness: o que o agente faz, em que ordem, e o que ele nunca faz
 CLAUDE.md              importa AGENTS.md para o Claude Code
+harness/configurar.sh  bootstrap: lê "ssh root@IP", grava o config, abre o arquivo das senhas
 harness/00-preflight.sh, 05-senha.sh, 10-instalar.sh, 20-verificar.sh, 30-desktop.sh
 harness/status.sh, logs.sh, atualizar.sh, backup.sh, senha.sh     operação (rodam na VPS por SSH)
 harness/remoto/        o que vai para /opt/hermes na VPS: instalar-vps.sh, compose.yml, Caddyfile, bin/

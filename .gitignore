@@ -1,5 +1,7 @@
 # estado local do aluno: nunca sobe
 config/hermes-vps.env
+config/hermes-vps.env.bak
+config/acesso.local
 config/senha.local
 config/.estado
 config/.preflight.ok

@@ -9,7 +9,7 @@ RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CONFIG_DIR="$RAIZ/config"
 CONFIG="$CONFIG_DIR/hermes-vps.env"
 CONFIG_EXEMPLO="$CONFIG_DIR/hermes-vps.env.example"
-SENHA_ARQ="$CONFIG_DIR/senha.local"
+ACESSO_ARQ="$CONFIG_DIR/acesso.local"   # o que o usuário cola: senha root da VPS e senha do painel
 ESTADO="$CONFIG_DIR/.estado"
 # shellcheck disable=SC2034  # usados pelos scripts que fazem source
 REMOTO_DIR="/opt/hermes"
@@ -96,8 +96,50 @@ carregar_config() {
     export VPS_HOST SSH_USER SSH_PORT SSH_KEY MODO DOMINIO PAINEL_USUARIO
 }
 
-# Roda um comando na VPS. Uso: vps 'comando'   |   vps < script-por-stdin
-vps() { ssh "${SSH_OPTS[@]}" "$SSH_USER@$VPS_HOST" "$@"; }
+# --- arquivo de acesso ---------------------------------------------------------
+# Lê um campo de config/acesso.local sem imprimir. Uso: campo_acesso PAINEL_SENHA
+campo_acesso() { sed -n "s/^$1=//p" "$ACESSO_ARQ" 2>/dev/null | head -1 | tr -d '\r' | sed 's/[[:space:]]*$//'; }
+tem_senha_root() { [ -n "$(campo_acesso VPS_ROOT_SENHA)" ]; }
+
+# OpenSSH >= 8.4 é o mínimo para o agente conseguir entrar na VPS pela senha do arquivo.
+ssh_suporta_askpass() {
+    local v; v="$(ssh -V 2>&1 | sed -n 's/^OpenSSH_\([0-9]*\)\.\([0-9]*\).*/\1 \2/p')"
+    [ -n "$v" ] || return 1
+    local maior menor; read -r maior menor <<< "$v"
+    [ "$maior" -gt 8 ] || { [ "$maior" -eq 8 ] && [ "$menor" -ge 4 ]; }
+}
+
+# ssh usando a senha root do arquivo de acesso (sem chave). Uso igual ao vps().
+# O OpenSSH lê a senha de harness/askpass.sh, que a lê do arquivo: nada em argumento ou terminal.
+vps_por_senha() {
+    tem_senha_root || morrer "sem VPS_ROOT_SENHA em $ACESSO_ARQ"
+    ssh_suporta_askpass || morrer "seu ssh é antigo demais (precisa OpenSSH 8.4+)"
+    [ -x "$RAIZ/harness/askpass.sh" ] || chmod +x "$RAIZ/harness/askpass.sh"   # zip baixado perde o bit de execução
+    SSH_ASKPASS="$RAIZ/harness/askpass.sh" SSH_ASKPASS_REQUIRE=force DISPLAY="${DISPLAY:-:0}" HERMES_VPS_ACESSO="$ACESSO_ARQ" \
+        ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password,keyboard-interactive \
+            -o NumberOfPasswordPrompts=1 -o ConnectTimeout=15 -o StrictHostKeyChecking=accept-new \
+            -o LogLevel=ERROR -p "$SSH_PORT" "$SSH_USER@$VPS_HOST" "$@"
+}
+
+# Autoriza a chave do harness na VPS usando a senha root (o que o ssh-copy-id faria).
+autorizar_chave() {
+    [ -f "$SSH_KEY.pub" ] || morrer "não existe $SSH_KEY.pub"
+    vps_por_senha 'umask 077; mkdir -p ~/.ssh; touch ~/.ssh/authorized_keys; cat >> ~/.ssh/authorized_keys' < "$SSH_KEY.pub"
+}
+
+# Roda um comando na VPS. Chave primeiro; se a conexão falhar (ssh devolve 255) e houver
+# senha root no arquivo, reautoriza a chave com a senha e tenta de novo.
+# Uso: vps 'comando'   |   vps 'comando' < entrada
+vps() {
+    local rc=0
+    ssh "${SSH_OPTS[@]}" "$SSH_USER@$VPS_HOST" "$@" || rc=$?
+    if [ "$rc" -eq 255 ] && tem_senha_root; then
+        aviso "a chave não entrou em $VPS_HOST; usando a senha root para autorizar a chave de novo" >&2
+        autorizar_chave >/dev/null || morrer "nem a senha root entrou. Confira VPS_HOST e a senha em $ACESSO_ARQ (dá para redefinir no hPanel)."
+        rc=0; ssh "${SSH_OPTS[@]}" "$SSH_USER@$VPS_HOST" "$@" || rc=$?
+    fi
+    return "$rc"
+}
 
 # Copia arquivos para a VPS. Uso: enviar origem... destino
 enviar() { scp -q -r -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o LogLevel=ERROR -i "$SSH_KEY" -P "$SSH_PORT" "$@"; }
@@ -120,13 +162,13 @@ gravar_estado() {
     printf '%s=%s\n' "$k" "$v" >> "$ESTADO"
 }
 
-# --- senha (nunca ecoar) -----------------------------------------------------
-# Lê a senha de config/senha.local para a variável PAINEL_SENHA_OK=1/0 sem imprimir.
+# --- senhas (nunca ecoar) ----------------------------------------------------
+# Valida a senha do painel em config/acesso.local sem imprimir.
 # Regras: 12 a 64 caracteres, sem espaço, sem aspas, sem $ ` \ # (quebram .env do compose).
 validar_senha_arquivo() {
-    [ -f "$SENHA_ARQ" ] || { falha "não existe $SENHA_ARQ"; return 1; }
+    [ -f "$ACESSO_ARQ" ] || { falha "não existe $ACESSO_ARQ"; return 1; }
     local s
-    s="$(sed -n 's/^PAINEL_SENHA=//p' "$SENHA_ARQ" | head -1 | tr -d '\r')"
+    s="$(campo_acesso PAINEL_SENHA)"
     local n=${#s}
     if [ "$n" -lt 12 ]; then falha "senha curta: $n caracteres (mínimo 12)"; return 1; fi
     if [ "$n" -gt 64 ]; then falha "senha longa: $n caracteres (máximo 64)"; return 1; fi
@@ -136,4 +178,29 @@ validar_senha_arquivo() {
     fi
     ok "senha válida ($n caracteres). O valor não é mostrado."
     return 0
+}
+
+# Apaga só o valor da senha do painel (a senha root fica: é a credencial de gestão do agente).
+limpar_senha_painel() {
+    [ -f "$ACESSO_ARQ" ] || return 0
+    local tmp; tmp="$(mktemp)"
+    sed 's/^PAINEL_SENHA=.*/PAINEL_SENHA=/' "$ACESSO_ARQ" > "$tmp" && cat "$tmp" > "$ACESSO_ARQ"; rm -f "$tmp"
+    chmod 600 "$ACESSO_ARQ" 2>/dev/null || true
+}
+
+# Cria config/acesso.local com os campos vazios, permissão 600. Não sobrescreve.
+criar_acesso_esqueleto() {
+    [ -f "$ACESSO_ARQ" ] && return 0
+    umask 077
+    cat > "$ACESSO_ARQ" <<'ARQ'
+# Preencha depois do sinal de igual, sem aspas, e salve. Este arquivo fica fora do git.
+#
+# Senha root da VPS (Hostinger: hPanel > VPS > Visão geral > "Redefinir senha" define uma nova).
+# O agente usa para entrar na primeira vez e guarda como credencial de gestão da VPS.
+VPS_ROOT_SENHA=
+#
+# Senha do painel do Hermes: você escolhe. 12 a 64 caracteres, letras, números e . _ - ! @ % * + = : , ~ ^
+# Sem espaço, aspas, $, #, \ ou crase. Usada uma vez na instalação e apagada desta linha.
+PAINEL_SENHA=
+ARQ
 }

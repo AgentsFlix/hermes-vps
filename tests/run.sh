@@ -54,16 +54,29 @@ CFG
 done
 rm -f config/hermes-vps.env config/.estado
 
+passo "configurar: parse do acesso SSH"
+for ent in "ssh root@203.0.113.10" "root@203.0.113.10" "203.0.113.10" "ssh -p 2222 root@203.0.113.10" "ssh root@203.0.113.10 -p 2222" "root@srv1.hstgr.cloud:2222"; do
+    HERMES_VPS_SEM_ABRIR=1 bash harness/configurar.sh "$ent" >/dev/null 2>&1 || { echo "FALHA: configurar não aceitou: $ent"; falhas=$((falhas+1)); continue; }
+    h="$(sed -n 's/^VPS_HOST=//p' config/hermes-vps.env)"; p="$(sed -n 's/^SSH_PORT=//p' config/hermes-vps.env)"
+    case "$ent" in *2222*) esp=2222 ;; *) esp=22 ;; esac
+    if [ "$p" = "$esp" ] && [ -n "$h" ]; then echo "ok configurar: '$ent' → $h:$p"; else echo "FALHA: '$ent' → $h:$p"; falhas=$((falhas+1)); fi
+done
+[ -f config/acesso.local ] && [ "$(stat -f %Lp config/acesso.local 2>/dev/null || stat -c %a config/acesso.local)" = 600 ] && echo "ok acesso.local criado com 600"
+grep -q '^VPS_ROOT_SENHA=$' config/acesso.local && grep -q '^PAINEL_SENHA=$' config/acesso.local && echo "ok acesso.local com os dois campos vazios"
+rm -f config/hermes-vps.env config/hermes-vps.env.bak config/acesso.local
+
 passo "senha: validação sem eco"
-printf 'PAINEL_SENHA=curta\n' > config/senha.local
+printf 'VPS_ROOT_SENHA=raiz-de-teste\nPAINEL_SENHA=curta\n' > config/acesso.local
 if bash harness/05-senha.sh validar >/dev/null 2>&1; then echo "FALHA: aceitou senha curta"; falhas=$((falhas+1)); else echo "ok recusa curta"; fi
-printf 'PAINEL_SENHA=tem espaco dentro 123\n' > config/senha.local
+printf 'VPS_ROOT_SENHA=raiz-de-teste\nPAINEL_SENHA=tem espaco dentro 123\n' > config/acesso.local
 if bash harness/05-senha.sh validar >/dev/null 2>&1; then echo "FALHA: aceitou espaço"; falhas=$((falhas+1)); else echo "ok recusa espaço"; fi
-printf 'PAINEL_SENHA=Senha.valida-2026!\n' > config/senha.local
+printf 'VPS_ROOT_SENHA=raiz-de-teste\nPAINEL_SENHA=Senha.valida-2026!\n' > config/acesso.local
 saida="$(bash harness/05-senha.sh validar 2>&1)"
-echo "$saida" | grep -q "Senha.valida" && { echo "FALHA: ecoou a senha"; falhas=$((falhas+1)); }
+echo "$saida" | grep -qE "Senha.valida|raiz-de-teste" && { echo "FALHA: ecoou senha"; falhas=$((falhas+1)); }
 echo "$saida" | grep -q "senha válida" && echo "ok aceita válida sem ecoar"
-rm -f config/senha.local
+bash harness/05-senha.sh limpar >/dev/null
+grep -q '^PAINEL_SENHA=$' config/acesso.local && grep -q '^VPS_ROOT_SENHA=raiz-de-teste$' config/acesso.local && echo "ok limpar apaga só a senha do painel"
+rm -f config/acesso.local
 
 echo
 if [ "$falhas" -eq 0 ]; then echo "TODOS OS TESTES PASSARAM"; else echo "$falhas FALHA(S)"; exit 1; fi

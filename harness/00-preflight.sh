@@ -5,13 +5,18 @@ source "$(dirname "$0")/lib.sh"
 
 log "harness hermes-vps · preflight"
 
-# 1. config
+# 1. config e arquivo de acesso
+faltou=0
 if [ ! -f "$CONFIG" ]; then
-    cp "$CONFIG_EXEMPLO" "$CONFIG"
-    aviso "criei $CONFIG. Preencha VPS_HOST (e o que mais quiser) e rode de novo."
-    abrir_editor "$CONFIG"
-    exit 2
+    cp "$CONFIG_EXEMPLO" "$CONFIG"; faltou=1
+    aviso "criei $CONFIG: falta VPS_HOST (o IP da VPS; o agente pode escrever, não é segredo)"
 fi
+if [ ! -f "$ACESSO_ARQ" ]; then
+    criar_acesso_esqueleto; faltou=1
+    aviso "criei $ACESSO_ARQ: o usuário preenche VPS_ROOT_SENHA (do hPanel) e PAINEL_SENHA (ele escolhe)"
+    abrir_editor "$ACESSO_ARQ"
+fi
+[ "$faltou" = 0 ] || { echo; aviso "preencha e rode de novo: bash harness/00-preflight.sh"; exit 2; }
 carregar_config
 ok "config: host=$VPS_HOST usuário=$SSH_USER porta=$SSH_PORT modo=$MODO painel_usuario=$PAINEL_USUARIO"
 
@@ -19,7 +24,8 @@ ok "config: host=$VPS_HOST usuário=$SSH_USER porta=$SSH_PORT modo=$MODO painel_
 for t in ssh scp curl; do
     command -v "$t" >/dev/null 2>&1 || morrer "falta '$t' na sua máquina"
 done
-ok "ferramentas locais: ssh, scp, curl"
+ok "ferramentas locais: ssh, scp, curl ($(ssh -V 2>&1 | cut -d, -f1))"
+ssh_suporta_askpass || aviso "ssh antigo (< OpenSSH 8.4): o agente não vai conseguir entrar com a senha root; a alternativa é o ssh-copy-id pelo usuário"
 
 # 3. chave SSH
 if [ ! -f "$SSH_KEY" ]; then
@@ -30,20 +36,24 @@ if [ ! -f "$SSH_KEY" ]; then
 fi
 [ -f "$SSH_KEY.pub" ] || morrer "existe $SSH_KEY mas não $SSH_KEY.pub"
 
-# 4. acesso
-if ! vps true 2>/dev/null; then
-    falha "não consegui entrar em $SSH_USER@$VPS_HOST com a chave."
-    cat <<MSG
+# 4. acesso: chave; se não entrar, autoriza a chave com a senha root do arquivo
+if ! ssh "${SSH_OPTS[@]}" "$SSH_USER@$VPS_HOST" true 2>/dev/null; then
+    if tem_senha_root && ssh_suporta_askpass; then
+        log "chave ainda não autorizada: entrando com a senha root para autorizar"
+        autorizar_chave >/dev/null || morrer "a senha root em $ACESSO_ARQ não entrou em $SSH_USER@$VPS_HOST:$SSH_PORT. Confira o IP e a senha (no hPanel dá para redefinir)."
+        ssh "${SSH_OPTS[@]}" "$SSH_USER@$VPS_HOST" true 2>/dev/null || morrer "autorizei a chave mas ela não entra. A VPS pode estar recusando chave (PubkeyAuthentication no no sshd_config)."
+        ok "chave autorizada na VPS com a senha root; daqui em diante o agente entra com a chave (a senha fica em $ACESSO_ARQ como reserva)"
+    else
+        falha "não consegui entrar em $SSH_USER@$VPS_HOST com a chave, e não há VPS_ROOT_SENHA em $ACESSO_ARQ."
+        cat <<MSG
 
-  A chave ainda não está autorizada na VPS. Faça isto UMA vez, no SEU terminal
-  (vai pedir a senha root da VPS; digite lá, não no chat):
-
-    ssh-copy-id -i "$SSH_KEY.pub" -p $SSH_PORT $SSH_USER@$VPS_HOST
-
-  Depois rode de novo:  bash harness/00-preflight.sh
+  Duas saídas:
+  a) o usuário preenche VPS_ROOT_SENHA em $ACESSO_ARQ (o agente abre o arquivo) e você roda de novo; ou
+  b) o usuário roda no terminal dele:  ssh-copy-id -i "$SSH_KEY.pub" -p $SSH_PORT $SSH_USER@$VPS_HOST
 
 MSG
-    exit 3
+        exit 3
+    fi
 fi
 ok "SSH entra com a chave"
 
@@ -116,4 +126,4 @@ gravar_estado OS "${S_OS_ID}-${S_OS_VER}"
 gravar_estado PREFLIGHT_EM "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 ok "estado gravado em $ESTADO"
 echo
-ok "PREFLIGHT OK. Próximo passo: bash harness/05-senha.sh criar"
+ok "PREFLIGHT OK. Próximo passo: bash harness/05-senha.sh validar"
