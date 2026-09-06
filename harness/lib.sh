@@ -204,3 +204,22 @@ VPS_ROOT_SENHA=
 PAINEL_SENHA=
 ARQ
 }
+
+# --- onboarding (fases 40, 50 e 60) --------------------------------------------
+# shellcheck disable=SC2034
+CHAVES_ARQ="$CONFIG_DIR/chaves.local"    # o que o usuário cola: chaves do Maton e do Zernio
+# shellcheck disable=SC2034
+ALMA_ARQ="$CONFIG_DIR/alma.env"          # respostas do intake (não é segredo)
+
+# Lê um campo KEY=valor de um arquivo sem imprimir. Uso: campo_de ARQUIVO CHAVE
+campo_de() { sed -n "s/^$2=//p" "$1" 2>/dev/null | head -1 | tr -d '\r' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'; }
+
+# Reinicia só o container do Hermes na VPS (relê config.yaml, .env e SOUL.md) e espera o painel.
+reiniciar_hermes() {
+    vps "cd $REMOTO_DIR && docker compose restart hermes >/dev/null 2>&1 && for _ in \$(seq 1 60); do curl -fsS --max-time 5 http://127.0.0.1:9119/api/status >/dev/null 2>&1 && exit 0; sleep 2; done; exit 1" \
+        || morrer "o Hermes não voltou depois do restart. Veja: bash harness/logs.sh"
+}
+
+# Roda o hermes DENTRO do container, como o usuário hermes (o shim da imagem já rebaixa root).
+# Uso: hermes_na_vps 'auth status openai-codex'
+hermes_na_vps() { vps "docker exec hermes hermes $*"; }

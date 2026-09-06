@@ -1,7 +1,7 @@
 # A instalação de referência (EasyPanel)
 
 Medido em 06/09/2026 num EasyPanel v2.32.2 rodando numa VPS Hostinger KVM 2 (2 vCPU, 8 GB,
-Ubuntu 24.04 com o template "Ubuntu 24.04 with Easypanel"). Projeto `hermes-agent-mgt`, serviço
+Ubuntu 24.04 com o template "Ubuntu 24.04 with Easypanel"). Um projeto, um serviço
 `hermes-agent`. Sem valores de segredo aqui, só a forma.
 
 | no EasyPanel | valor de referência | no harness |

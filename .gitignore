@@ -9,3 +9,5 @@ config/*.bak
 # gerado pelos testes
 tests/.tmp/
 .DS_Store
+config/chaves.local
+config/alma.env

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Bootstrap: recebe o acesso SSH como o usuário colou (ex.: "ssh root@82.25.74.224",
-# "root@82.25.74.224", "82.25.74.224", com ou sem "-p 2222"), escreve config/hermes-vps.env,
+# Bootstrap: recebe o acesso SSH como o usuário colou (ex.: "ssh root@203.0.113.10",
+# "root@203.0.113.10", "203.0.113.10", com ou sem "-p 2222"), escreve config/hermes-vps.env,
 # cria config/acesso.local e abre para o usuário colar as senhas.
-# Uso: bash harness/configurar.sh "ssh root@82.25.74.224" [publico|tunel]
+# Uso: bash harness/configurar.sh "ssh root@203.0.113.10" [publico|tunel]
 source "$(dirname "$0")/lib.sh"
 
 entrada="${1:-}"

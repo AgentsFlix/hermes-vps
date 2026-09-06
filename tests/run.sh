@@ -78,5 +78,44 @@ bash harness/05-senha.sh limpar >/dev/null
 grep -q '^PAINEL_SENHA=$' config/acesso.local && grep -q '^VPS_ROOT_SENHA=raiz-de-teste$' config/acesso.local && echo "ok limpar apaga só a senha do painel"
 rm -f config/acesso.local
 
+passo "codex-login: parse do código no log (sem VPS)"
+printf 'Signing in to OpenAI Codex...\n\n  1. Open this URL in your browser:\n     \033[94mhttps://auth.openai.com/codex/device\033[0m\n\n  2. Enter this code:\n     \033[94mABCD-EFGHJ\033[0m\n\nWaiting for sign-in... (press Ctrl+C to cancel)\n' > "$TMP/codex.log"
+saida="$(CODEX_LOG="$TMP/codex.log" bash harness/remoto/bin/codex-login.sh codigo)"
+echo "$saida" | grep -q '^URL=https://auth.openai.com/codex/device$' && echo "$saida" | grep -q '^CODIGO=ABCD-EFGHJ$' && echo "ok codigo lido sem ANSI" || { echo "FALHA: parse do código: $saida"; falhas=$((falhas+1)); }
+rc=0; CODEX_LOG="$TMP/codex.log" bash harness/remoto/bin/codex-login.sh esperar 5 >/dev/null || rc=$?; [ "$rc" -eq 3 ] && echo "ok esperar devolve 3 enquanto espera" || { echo "FALHA: esperar"; falhas=$((falhas+1)); }
+printf 'Saved openai-codex OAuth device-code credentials: "conta"\n' >> "$TMP/codex.log"
+CODEX_LOG="$TMP/codex.log" bash harness/remoto/bin/codex-login.sh esperar 5 >/dev/null && echo "ok esperar devolve 0 ao entrar" || { echo "FALHA: esperar 0"; falhas=$((falhas+1)); }
+
+passo "env-add: upsert no .env sem imprimir valor (python local)"
+sed -n "/<<'PY'/,/^PY$/p" harness/remoto/bin/env-add.sh | sed '1d;$d' > "$TMP/env-add.py"
+printf 'OUTRA=1\nMATON_API_KEY=velha\n' > "$TMP/env-teste"
+saida="$(printf 'MATON_API_KEY=nova-chave-de-teste-1234567890\nZERNIO_API_KEY=sk_zernio_teste_0123456789\n' | HERMES_ENV_PATH="$TMP/env-teste" python3 "$TMP/env-add.py")"
+echo "$saida" | grep -qE 'nova-chave|sk_zernio' && { echo "FALHA: env-add ecoou valor"; falhas=$((falhas+1)); }
+grep -q '^OUTRA=1$' "$TMP/env-teste" && [ "$(grep -c '^MATON_API_KEY=' "$TMP/env-teste")" = 1 ] && grep -q '^MATON_API_KEY=nova-chave-de-teste-1234567890$' "$TMP/env-teste" && grep -q '^ZERNIO_API_KEY=' "$TMP/env-teste" && echo "ok upsert preserva o resto e substitui a chave" || { echo "FALHA: upsert"; falhas=$((falhas+1)); }
+printf 'PATH=/x\n' | HERMES_ENV_PATH="$TMP/env-teste" python3 "$TMP/env-add.py" >/dev/null 2>&1 && { echo "FALHA: aceitou PATH"; falhas=$((falhas+1)); } || echo "ok recusa nome proibido"
+
+passo "alma: template sem placeholder"
+printf 'DONO=Maria\nAGENTE=Sofia\nFAZ=cuida de uma clínica em Manaus\nTOM=informal\nTAREFAS=responder e-mail; agendar consulta; resumir reunião\n' > config/alma.env
+saida="$(bash harness/50-alma.sh mostrar)"
+echo "$saida" | grep -q '{{' && { echo "FALHA: sobrou placeholder"; falhas=$((falhas+1)); }
+echo "$saida" | grep -q '^- agendar consulta$' && echo "$saida" | grep -q 'Você é Sofia, o agente pessoal de Maria' && echo "ok SOUL.md preenchido" || { echo "FALHA: SOUL.md"; falhas=$((falhas+1)); }
+printf 'DONO=Maria\nAGENTE=Sofia\nFAZ=x\nTOM=gritando\nTAREFAS=a\n' > config/alma.env
+bash harness/50-alma.sh validar >/dev/null 2>&1 && { echo "FALHA: aceitou TOM inválido"; falhas=$((falhas+1)); } || echo "ok recusa TOM inválido"
+rm -f config/alma.env
+
+passo "hubs: validação das chaves sem eco"
+printf 'MATON_API_KEY=curta\nZERNIO_API_KEY=\n' > config/chaves.local
+bash harness/60-hubs.sh validar >/dev/null 2>&1 && { echo "FALHA: aceitou chave curta"; falhas=$((falhas+1)); } || echo "ok recusa curta"
+printf 'MATON_API_KEY=\nZERNIO_API_KEY=\n' > config/chaves.local
+rc=0; bash harness/60-hubs.sh validar >/dev/null 2>&1 || rc=$?; [ "$rc" -eq 3 ] && echo "ok duas vazias devolve 3" || { echo "FALHA: vazias"; falhas=$((falhas+1)); }
+printf 'MATON_API_KEY=maton_chave_de_teste_0123456789\nZERNIO_API_KEY=sk_zernio_chave_teste_0123456789\n' > config/chaves.local
+saida="$(bash harness/60-hubs.sh validar 2>&1)"
+echo "$saida" | grep -qE 'maton_chave|sk_zernio' && { echo "FALHA: ecoou chave"; falhas=$((falhas+1)); }
+echo "$saida" | grep -q 'chaves prontas' && echo "ok aceita válidas sem ecoar" || { echo "FALHA: válidas"; falhas=$((falhas+1)); }
+rm -f config/chaves.local
+
+passo "modelo: iniciar exige --confirmado"
+bash harness/40-modelo.sh iniciar >/dev/null 2>&1 && { echo "FALHA: iniciou sem confirmação"; falhas=$((falhas+1)); } || echo "ok gate do ChatGPT"
+
 echo
 if [ "$falhas" -eq 0 ]; then echo "TODOS OS TESTES PASSARAM"; else echo "$falhas FALHA(S)"; exit 1; fi

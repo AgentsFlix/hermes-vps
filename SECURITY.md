@@ -2,13 +2,20 @@
 
 ## O que este harness faz com os seus segredos
 
-- **Senha do painel**: você digita num arquivo local (`config/senha.local`) que o harness abre para você.
-  O agente valida tamanho e caracteres sem mostrar o valor, envia para a VPS pelo stdin do SSH
-  e apaga o arquivo. A senha vive só em `/opt/hermes/.env` na VPS, com permissão `600`.
-- **Chave de provedor de IA** (OpenRouter, Anthropic, OpenAI...): nunca passa pelo agente.
-  Você cola no painel do Hermes, em *API Keys*, depois de instalado.
-- **Chave SSH**: gerada na sua máquina, sem passphrase, só para esta VPS. A senha root da VPS você
-  digita uma vez no seu terminal, no `ssh-copy-id`. O agente não a vê.
+- **Senha root da VPS e senha do painel**: você digita num arquivo local (`config/acesso.local`,
+  permissão 600) que o harness abre para você. O agente valida sem mostrar o valor. A senha do
+  painel vai para a VPS pelo stdin do SSH e é apagada do arquivo; vive só em `/opt/hermes/.env`,
+  com permissão `600`. A senha root fica no arquivo como credencial de gestão: o OpenSSH a lê
+  por `SSH_ASKPASS` só para autorizar a chave, e nunca em argumento, log ou chat.
+- **Chave SSH**: gerada na sua máquina, sem passphrase, só para esta VPS.
+- **Conta do ChatGPT**: o Hermes entra por código de dispositivo. Você digita o código numa
+  página da OpenAI, no seu navegador; o agente só vê a URL e o código, que expira em 15 minutos.
+  Os tokens ficam em `/opt/data/auth.json` na VPS, do usuário `hermes`.
+- **Chaves do Maton e do Zernio**: você cola em `config/chaves.local` (permissão 600), que o
+  harness abre para você. Validação por tamanho, sem mostrar; vão pela stdin do SSH para
+  `/opt/data/.env` na VPS; os valores são apagados do arquivo local em seguida.
+- **Skills** dos hubs: instaladas de tags fixas dos repositórios públicos, e passam pelo scanner
+  de segurança do Hermes sem `--force`. Se o scanner bloquear, o harness para.
 
 ## O que fica exposto na internet
 
