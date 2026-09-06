@@ -1,0 +1,46 @@
+# Hermes Agent na VPS. Espelha a instalação de referência no EasyPanel:
+# uma imagem oficial, um volume em /opt/data, painel com usuário e senha.
+# Variáveis vêm de /opt/hermes/.env (escrito pelo instalador, permissão 600).
+name: hermes
+
+services:
+  hermes:
+    image: ${HERMES_IMAGEM:-nousresearch/hermes-agent:latest}
+    container_name: hermes
+    restart: unless-stopped
+    command: ["gateway", "run"]
+    environment:
+      HERMES_DASHBOARD: "1"
+      HERMES_DASHBOARD_HOST: "0.0.0.0"
+      HERMES_DASHBOARD_PORT: "9119"
+      HERMES_DASHBOARD_BASIC_AUTH_USERNAME: ${PAINEL_USUARIO}
+      HERMES_DASHBOARD_BASIC_AUTH_PASSWORD: ${PAINEL_SENHA}
+      HERMES_DASHBOARD_BASIC_AUTH_SECRET: ${PAINEL_SEGREDO}
+    ports:
+      # só o loopback da VPS: quem entrega para fora é o Caddy (ou o túnel SSH)
+      - "127.0.0.1:9119:9119"
+    volumes:
+      - hermes-data:/opt/data
+
+  caddy:
+    image: caddy:2
+    container_name: hermes-caddy
+    restart: unless-stopped
+    profiles: ["publico"]
+    depends_on:
+      - hermes
+    environment:
+      HOSTNAME_TLS: ${HOSTNAME_TLS}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  hermes-data:
+  caddy-data:
+  caddy-config:

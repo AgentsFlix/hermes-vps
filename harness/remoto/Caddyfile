@@ -1,0 +1,5 @@
+# TLS automático (Let's Encrypt, com ZeroSSL de reserva) para o hostname decidido no preflight.
+{$HOSTNAME_TLS} {
+	encode zstd gzip
+	reverse_proxy hermes:9119
+}

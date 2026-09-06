@@ -1,0 +1,9 @@
+# estado local do aluno: nunca sobe
+config/hermes-vps.env
+config/senha.local
+config/.estado
+config/.preflight.ok
+config/*.bak
+# gerado pelos testes
+tests/.tmp/
+.DS_Store

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meu Hermes</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%98%A4%3C/text%3E%3C/svg%3E">
+<style>
+  :root{--ciano:#30B0C7;--carvao:#14161A;--fundo:#0f1114;--card:#1a1d22;--borda:#262a31;--texto:#e8eaed;--mudo:#9aa3ad;--ok:#3ddc84;--erro:#ff6b6b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fundo);color:var(--texto);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  main{max-width:820px;margin:0 auto;padding:40px 24px 64px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+  h1{font-size:28px;margin:0;letter-spacing:-.01em}
+  h1 span{color:var(--ciano)}
+  .meta{color:var(--mudo);font-size:14px}
+  .hero{background:var(--card);border:1px solid var(--borda);border-radius:14px;padding:28px;display:flex;flex-wrap:wrap;align-items:center;gap:20px}
+  .hero .url{flex:1;min-width:240px}
+  .hero .url small{display:block;color:var(--mudo);font-size:13px;margin-bottom:6px}
+  .hero .url code{font-size:15px;color:var(--texto);word-break:break-all}
+  .btn{display:inline-block;background:var(--ciano);color:var(--carvao);font-weight:700;text-decoration:none;padding:14px 22px;border-radius:10px;font-size:16px;border:0;cursor:pointer}
+  .btn:hover{filter:brightness(1.08)}
+  .pill{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--mudo);margin-top:10px}
+  .pill i{width:9px;height:9px;border-radius:50%;background:var(--mudo);display:inline-block}
+  .pill.ok i{background:var(--ok)} .pill.erro i{background:var(--erro)}
+  section{margin-top:36px}
+  h2{font-size:18px;margin:0 0 12px;color:var(--ciano)}
+  ol,ul{margin:0;padding-left:22px} li{margin:6px 0}
+  .cmd{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--borda);border-radius:10px;padding:10px 12px;margin:8px 0}
+  .cmd code{flex:1;font:13.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all;color:var(--texto)}
+  .cmd button{background:transparent;color:var(--ciano);border:1px solid var(--ciano);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+  .cmd button:hover{background:var(--ciano);color:var(--carvao)}
+  .nota{background:var(--card);border-left:3px solid var(--ciano);padding:12px 16px;border-radius:8px;color:var(--mudo);font-size:14px}
+  footer{margin-top:48px;color:var(--mudo);font-size:13px;border-top:1px solid var(--borda);padding-top:16px}
+  a{color:var(--ciano)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Meu <span>Hermes</span></h1>
+      <div class="meta">VPS {{HOST}} · modo {{MODO}} · gerado em {{DATA}}</div>
+    </div>
+    <div class="meta">Hermes Agent {{VERSAO}}</div>
+  </header>
+
+  <div class="hero">
+    <div class="url">
+      <small>Seu painel</small>
+      <code>{{URL}}</code>
+      <div class="pill" id="status"><i></i><span>verificando…</span></div>
+    </div>
+    <a class="btn" href="{{URL}}" target="_blank" rel="noopener">Abrir o painel</a>
+  </div>
+  <!--TUNEL-->
+  <p class="nota" style="margin-top:14px">Modo túnel: antes de abrir o painel, dê dois cliques em <b>{{TUNEL_ARQ}}</b> (está nesta mesma pasta). Ele abre a ponte segura até a VPS e o painel em seguida. Fechou a janela, fechou a ponte.</p>
+  <!--/TUNEL-->
+
+  <section>
+    <h2>Primeira vez</h2>
+    <ol>
+      <li>Entre com o usuário <b>{{USUARIO}}</b> e a senha que você escolheu na instalação.</li>
+      <li>Em <b>API Keys</b>, cole a chave do seu provedor de IA (OpenRouter, Anthropic, OpenAI…). Ela fica só na VPS.</li>
+      <li>Em <b>Chat</b>, converse. É o Hermes completo, rodando na sua VPS.</li>
+      <li>Quer o Hermes no Telegram, WhatsApp ou Discord? Configure o canal em <b>API Keys</b>; o gateway já está rodando e passa a atender ali.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>No computador, como aplicativo</h2>
+    <p>O <a href="https://hermes-agent.nousresearch.com/" target="_blank" rel="noopener">Hermes Desktop</a> conecta nesta mesma VPS: em <b>Settings → Gateways → Remote gateway</b>, informe <code>{{URL}}</code> e entre com o usuário e a senha do painel.</p>
+  </section>
+
+  <section>
+    <h2>Operar</h2>
+    <p class="meta">Peça ao seu agente (Claude Code ou Codex), de dentro da pasta do harness:</p>
+    <div class="cmd"><code>bash harness/status.sh</code><button data-copy>copiar</button></div>
+    <div class="cmd"><code>bash harness/logs.sh</code><button data-copy>copiar</button></div>
+    <div class="cmd"><code>bash harness/atualizar.sh</code><button data-copy>copiar</button></div>
+    <div class="cmd"><code>bash harness/backup.sh</code><button data-copy>copiar</button></div>
+    <div class="cmd"><code>bash harness/senha.sh criar</code><button data-copy>copiar</button></div>
+    <p class="meta">Entrar direto na VPS pelo terminal:</p>
+    <div class="cmd"><code>{{SSH_CMD}}</code><button data-copy>copiar</button></div>
+  </section>
+
+  <section>
+    <h2>Se algo quebrar</h2>
+    <ul>
+      <li>Painel não abre: rode <code>bash harness/status.sh</code>. Container parado? <code>bash harness/atualizar.sh</code> sobe de novo.</li>
+      <!--PUBLICO--><li>Aviso de certificado no navegador logo depois de instalar: espere 1 minuto e recarregue. O certificado é emitido na primeira visita.</li><!--/PUBLICO-->
+      <li>Esqueceu a senha: <code>bash harness/senha.sh criar</code>, digite a nova no arquivo, depois <code>bash harness/senha.sh aplicar</code>.</li>
+      <li>Dúvida ou erro novo: <a href="{{REPO}}" target="_blank" rel="noopener">{{REPO}}</a></li>
+    </ul>
+  </section>
+
+  <footer>Harness hermes-vps · AgentsFlix · pasta do harness nesta máquina: <code>{{RAIZ}}</code></footer>
+</main>
+<script>
+  (function(){
+    var pill=document.getElementById('status');
+    var alvo='{{URL}}'+'/api/status';
+    var t=setTimeout(function(){marcar('erro','sem resposta (VPS desligada, túnel fechado ou sem internet)')},8000);
+    function marcar(c,txt){clearTimeout(t);pill.className='pill '+c;pill.querySelector('span').textContent=txt}
+    try{
+      fetch(alvo,{mode:'no-cors',cache:'no-store'}).then(function(){marcar('ok','painel respondendo')}).catch(function(){marcar('erro','sem resposta (VPS desligada, túnel fechado ou sem internet)')});
+    }catch(e){marcar('erro','não deu para verificar')}
+    document.querySelectorAll('[data-copy]').forEach(function(b){
+      b.addEventListener('click',function(){
+        var txt=b.parentNode.querySelector('code').textContent;
+        (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(function(){b.textContent='copiado';setTimeout(function(){b.textContent='copiar'},1500)}).catch(function(){window.prompt('Copie:',txt)});
+      });
+    });
+  })();
+</script>
+</body>
+</html>
