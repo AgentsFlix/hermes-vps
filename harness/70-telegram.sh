@@ -49,15 +49,51 @@ case "${1:-}" in
         if [ ! -f "$TELEGRAM_ARQ" ]; then
             umask 077
             cat > "$TELEGRAM_ARQ" <<'ARQ'
-# Cole depois do sinal de igual, sem aspas e sem espaço, e salve. Fica fora do git,
-# e o token é apagado daqui depois de gravado na VPS.
+# ======================================================================
+#  SEU AGENTE NO TELEGRAM
 #
-# Token do bot, do @BotFather (a linha inteira, tipo 8123456789:AAF...)
+#  Preencha as duas linhas soltas abaixo, salve e volte para o chat
+#  dizendo: Feito.
+# ======================================================================
+
+
+# ----------------------------------------------------------------------
+#  1. TOKEN DO BOT
+#
+#  No Telegram, abra uma conversa com  @BotFather
+#    - mande  /newbot
+#    - escolha um nome (o que aparece na conversa)
+#    - escolha um usuário terminado em  bot
+#
+#  Ele responde com uma linha assim:
+#    8123456789:AAFxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#
+#  Copie essa linha inteira e cole depois do sinal de igual.
+# ----------------------------------------------------------------------
+
 TELEGRAM_BOT_TOKEN=
+
+
+# ----------------------------------------------------------------------
+#  2. QUEM PODE FALAR COM O BOT
 #
-# Seu Id numérico, do @userinfobot. Só quem estiver aqui consegue falar com o bot.
-# Mais de uma pessoa: separe por vírgula, sem espaço.
+#  No Telegram, abra uma conversa com  @userinfobot  e mande  /start
+#  Ele responde com  Id: 123456789
+#
+#  Cole esse número aqui. É ele que autoriza você a conversar com o
+#  agente: quem não estiver nesta lista é ignorado.
+#
+#  Mais de uma pessoa? Separe por vírgula, sem espaço:
+#    123456789,987654321
+# ----------------------------------------------------------------------
+
 TELEGRAM_ALLOWED_USERS=
+
+
+# ======================================================================
+#  Este arquivo fica no seu computador e fora do git. O token é apagado
+#  daqui assim que o bot conecta. A lista de números fica, não é segredo.
+# ======================================================================
 ARQ
         fi
         abrir_editor "$TELEGRAM_ARQ"

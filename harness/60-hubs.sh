@@ -25,14 +25,38 @@ case "${1:-}" in
         if [ ! -f "$CHAVES_ARQ" ]; then
             umask 077
             cat > "$CHAVES_ARQ" <<'ARQ'
-# Cole cada chave depois do sinal de igual, sem aspas, e salve. Este arquivo fica fora do git
-# e os valores são apagados daqui depois de gravados na VPS.
+# ======================================================================
+#  AS DUAS CENTRAIS DE FERRAMENTAS DO SEU AGENTE
 #
-# Maton (maton.ai > Settings > API Keys). Deixe vazio se não for usar o Maton agora.
+#  Preencha o que você tiver, salve e volte para o chat dizendo: Feito.
+#  Pode deixar uma em branco: essa central fica de fora e entra depois.
+# ======================================================================
+
+
+# ----------------------------------------------------------------------
+#  1. MATON  (apps: agenda, e-mail, planilha, CRM e outros)
+#
+#  Onde pegar: maton.ai, entre em Settings e depois API Keys.
+#  Cole a chave inteira logo depois do sinal de igual, sem aspas.
+# ----------------------------------------------------------------------
+
 MATON_API_KEY=
+
+
+# ----------------------------------------------------------------------
+#  2. ZERNIO  (redes sociais: publicar, agendar, ler comentários)
 #
-# Zernio (zernio.com > Settings > API). Deixe vazio se não for usar o Zernio agora.
+#  Onde pegar: zernio.com, entre em Settings e depois API.
+#  Cole a chave inteira logo depois do sinal de igual, sem aspas.
+# ----------------------------------------------------------------------
+
 ZERNIO_API_KEY=
+
+
+# ======================================================================
+#  Este arquivo fica no seu computador e fora do git. As chaves são
+#  apagadas daqui assim que entram na VPS, e só depois de conferidas.
+# ======================================================================
 ARQ
         fi
         abrir_editor "$CHAVES_ARQ"

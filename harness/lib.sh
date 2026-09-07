@@ -193,15 +193,45 @@ criar_acesso_esqueleto() {
     [ -f "$ACESSO_ARQ" ] && return 0
     umask 077
     cat > "$ACESSO_ARQ" <<'ARQ'
-# Preencha depois do sinal de igual, sem aspas, e salve. Este arquivo fica fora do git.
+# ======================================================================
+#  ACESSO À SUA VPS
 #
-# Senha root da VPS (Hostinger: hPanel > VPS > Visão geral > "Redefinir senha" define uma nova).
-# O agente usa para entrar na primeira vez e guarda como credencial de gestão da VPS.
+#  Preencha as duas linhas soltas abaixo, salve (Cmd+S no Mac,
+#  Ctrl+S no Windows) e volte para o chat dizendo: Feito.
+# ======================================================================
+
+
+# ----------------------------------------------------------------------
+#  1. SENHA ROOT DA VPS
+#
+#  Onde pegar: painel da Hostinger, em VPS, Configurações principais,
+#  "Alterar senha do root". Se você não anotou a sua, gere uma nova ali
+#  e cole aqui.
+#
+#  Cole logo depois do sinal de igual, sem aspas e sem espaço.
+# ----------------------------------------------------------------------
+
 VPS_ROOT_SENHA=
+
+
+# ----------------------------------------------------------------------
+#  2. SENHA DO PAINEL DO HERMES
 #
-# Senha do painel do Hermes: você escolhe. 12 a 64 caracteres, letras, números e . _ - ! @ % * + = : , ~ ^
-# Sem espaço, aspas, $, #, \ ou crase. Usada uma vez na instalação e apagada desta linha.
+#  Esta você inventa. É com ela que você vai entrar no painel do seu
+#  agente, pelo navegador.
+#
+#  De 12 a 64 caracteres.
+#  Pode usar:  letras, números e  . _ - ! @ % * + = : , ~ ^
+#  Não pode:   espaço, aspas, $, #, barra invertida ou crase.
+# ----------------------------------------------------------------------
+
 PAINEL_SENHA=
+
+
+# ======================================================================
+#  Este arquivo fica no seu computador e fora do git. A senha do painel
+#  é apagada daqui assim que entra na VPS. Nenhum valor aparece no chat.
+# ======================================================================
 ARQ
 }
 
