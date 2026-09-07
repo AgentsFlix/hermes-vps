@@ -20,20 +20,21 @@ hostname da VPS como endereço.
 |---|---|
 | VPS Ubuntu 24.04, 2 GB de RAM ou mais | Hostinger KVM 2 (template "Ubuntu 24.04" ou "Ubuntu 24.04 with Docker"; **não** o de EasyPanel) |
 | IP e senha root da VPS | hPanel → VPS → Visão geral |
-| Um agente no seu computador | [Claude Code](https://claude.com/claude-code) ou [Codex](https://openai.com/codex) |
+| Um agente no seu computador | [Claude Code](https://claude.com/claude-code), [Codex](https://openai.com/codex) ou [Antigravity](https://antigravity.google) |
 | Assinatura do ChatGPT (Plus, Pro, Team ou Business) | é por ela que o Hermes responde; o login é por código de dispositivo |
 | Opcional: chaves do Maton e do Zernio | maton.ai e zernio.com; você cola **num arquivo**, nunca no chat |
 | Windows? | Git Bash ou WSL (os scripts são bash) |
 
 ## Como usar
 
-Abra o Claude Code ou o Codex numa pasta vazia e cole o texto de [`PROMPT.md`](PROMPT.md):
+Abra o Claude Code, o Codex ou o Antigravity numa pasta vazia e cole o texto de
+[`PROMPT.md`](PROMPT.md):
 
 ```text
-Acesse https://github.com/AgentsFlix/hermes-vps para instalar e configurar o meu Hermes Agent.
-Clone o repositório aqui, leia o AGENTS.md inteiro antes de rodar qualquer comando e siga as
-fases na ordem, usando só os scripts de harness/. Pare a cada fase que pedir algo meu e me diga
-exatamente o que fazer. Comece me pedindo o acesso SSH da VPS.
+Instale e configure o meu Hermes Agent seguindo https://github.com/AgentsFlix/hermes-vps
+Clone o repositório nesta pasta, leia o AGENTS.md inteiro antes de rodar qualquer comando, e
+siga as fases na ordem usando só os scripts de harness/. Não improvise comando fora deles.
+Pare em cada fase que precisar de mim, uma coisa por vez, e me diga exatamente o que fazer.
 ```
 
 O agente lê `AGENTS.md` e abre um arquivo na sua tela com três campos: o endereço da VPS (você
@@ -81,7 +82,7 @@ abre por túnel SSH, com um atalho de dois cliques no Desktop.
 ```text
 PROMPT.md              o que o usuário cola no agente
 AGENTS.md              o harness: o que o agente faz, em que ordem, e o que ele nunca faz
-CLAUDE.md              importa AGENTS.md para o Claude Code
+CLAUDE.md, GEMINI.md   importam AGENTS.md para o Claude Code e para o Antigravity/Gemini
 harness/configurar.sh  bootstrap: lê "ssh root@IP", grava o config, abre o arquivo das senhas
 harness/00-preflight.sh, 05-senha.sh, 10-instalar.sh, 20-verificar.sh, 30-desktop.sh   instalação
 harness/40-modelo.sh, 50-alma.sh, 60-hubs.sh, 70-telegram.sh                            onboarding
