@@ -11,3 +11,4 @@ tests/.tmp/
 .DS_Store
 config/chaves.local
 config/alma.env
+config/telegram.local

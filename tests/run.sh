@@ -120,6 +120,26 @@ echo "$saida" | grep -qE 'maton_chave|sk_zernio' && { echo "FALHA: ecoou chave";
 echo "$saida" | grep -q 'chaves prontas' && echo "ok aceita válidas sem ecoar" || { echo "FALHA: válidas"; falhas=$((falhas+1)); }
 rm -f $CFG/chaves.local
 
+passo "telegram: validação sem eco do token"
+printf 'TELEGRAM_BOT_TOKEN=nao-e-token\nTELEGRAM_ALLOWED_USERS=123456789\n' > "$CFG/telegram.local"
+rc=0; bash harness/70-telegram.sh validar >/dev/null 2>&1 || rc=$?; [ "$rc" -eq 1 ] && echo "ok recusa token com forma errada" || { echo "FALHA: aceitou token inválido ($rc)"; falhas=$((falhas+1)); }
+printf 'TELEGRAM_BOT_TOKEN=8123456789:AAFxyzABCdefGHIjklMNOpqrSTUvwx12345\nTELEGRAM_ALLOWED_USERS=eu\n' > "$CFG/telegram.local"
+rc=0; bash harness/70-telegram.sh validar >/dev/null 2>&1 || rc=$?; [ "$rc" -eq 1 ] && echo "ok recusa id não numérico" || { echo "FALHA: aceitou id inválido ($rc)"; falhas=$((falhas+1)); }
+printf 'TELEGRAM_BOT_TOKEN=8123456789:AAFxyzABCdefGHIjklMNOpqrSTUvwx12345\nTELEGRAM_ALLOWED_USERS=\n' > "$CFG/telegram.local"
+rc=0; bash harness/70-telegram.sh validar >/dev/null 2>&1 || rc=$?; [ "$rc" -eq 2 ] && echo "ok exige lista de ids (bot aberto é risco)" || { echo "FALHA: aceitou sem ids ($rc)"; falhas=$((falhas+1)); }
+printf 'TELEGRAM_BOT_TOKEN=8123456789:AAFxyzABCdefGHIjklMNOpqrSTUvwx12345\nTELEGRAM_ALLOWED_USERS=123456789,987654321\n' > "$CFG/telegram.local"
+saida="$(bash harness/70-telegram.sh validar 2>&1)"
+echo "$saida" | grep -q 'AAFxyz' && { echo "FALHA: ecoou o token"; falhas=$((falhas+1)); }
+echo "$saida" | grep -q 'token presente' && echo "$saida" | grep -q '123456789,987654321' && echo "ok aceita válido sem ecoar o token" || { echo "FALHA: válido"; falhas=$((falhas+1)); }
+rm -f "$CFG/telegram.local"
+
+passo "plataformas.sh: lê o estado do gateway"
+cat > "$TMP/status-fake.json" <<'JSON'
+{"gateway_state":"running","gateway_platforms":{"api_server":{"state":"connected"},"telegram":{"state":"error","error_message":"Unauthorized"}}}
+JSON
+saida="$(sed -n "/^printf .%s. \"\$json\"/,/^.$/p" harness/remoto/bin/plataformas.sh | sed "1s/.*python3 -c .//; \$d" > "$TMP/plat.py"; ALVO=telegram python3 "$TMP/plat.py" < "$TMP/status-fake.json"; echo "rc=$?")"
+echo "$saida" | grep -q 'telegram: error' && echo "$saida" | grep -q 'rc=1' && echo "ok plataforma em erro devolve 1" || { echo "FALHA: plataformas.py: $saida"; falhas=$((falhas+1)); }
+
 passo "modelo: iniciar exige --confirmado"
 bash harness/40-modelo.sh iniciar >/dev/null 2>&1 && { echo "FALHA: iniciou sem confirmação"; falhas=$((falhas+1)); } || echo "ok gate do ChatGPT"
 

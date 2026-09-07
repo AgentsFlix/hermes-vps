@@ -14,6 +14,10 @@
 - **Chaves do Maton e do Zernio**: você cola em `config/chaves.local` (permissão 600), que o
   harness abre para você. Validação por tamanho, sem mostrar; vão pela stdin do SSH para
   `/opt/data/.env` na VPS; os valores são apagados do arquivo local em seguida.
+- **Telegram**: o token do bot entra em `config/telegram.local` (permissão 600), vai pela stdin do
+  SSH para o `.env` na VPS e é apagado do arquivo local depois que o gateway conecta. O token nunca
+  vai numa URL. A lista de ids autorizados é obrigatória: sem ela, qualquer pessoa que descobrir o
+  bot conversaria com o seu agente.
 - **Skills** dos hubs: instaladas de tags fixas dos repositórios públicos, e passam pelo scanner
   de segurança do Hermes sem `--force`. Se o scanner bloquear, o harness para.
 

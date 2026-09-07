@@ -54,6 +54,7 @@ bash harness/30-desktop.sh                 # pasta "Meu Hermes" no seu Desktop
 bash harness/40-modelo.sh roteiro          # o que ligar no ChatGPT; depois: iniciar --confirmado, esperar, concluir
 bash harness/50-alma.sh criar              # 5 respostas → SOUL.md e USER.md; depois: mostrar, aplicar
 bash harness/60-hubs.sh criar              # chaves do Maton e do Zernio; depois: validar, aplicar, provar
+bash harness/70-telegram.sh roteiro        # bot do @BotFather e Id do @userinfobot; depois: criar, validar, aplicar
 ```
 
 ## O que fica pronto
@@ -64,6 +65,8 @@ bash harness/60-hubs.sh criar              # chaves do Maton e do Zernio; depois
   tom e as três tarefas da primeira semana no `SOUL.md`.
 - **Maton e Zernio como skills**, com as chaves no `.env` do Hermes. As duas começam em modo
   leitura e pedem um sim antes de qualquer escrita.
+- **Um bot no Telegram** que só conversa com quem você autorizou, para falar com o agente do
+  celular sem abrir o painel.
 - **Hermes Desktop** pode conectar nessa VPS (Settings → Gateways → Remote gateway).
 - **Pasta `Meu Hermes` no Desktop** com a página de acesso, os primeiros passos e os comandos.
 - **Operação por comando:** `status`, `logs`, `atualizar` (com backup antes), `backup`, `senha`.
@@ -79,7 +82,7 @@ AGENTS.md              o harness: o que o agente faz, em que ordem, e o que ele 
 CLAUDE.md              importa AGENTS.md para o Claude Code
 harness/configurar.sh  bootstrap: lê "ssh root@IP", grava o config, abre o arquivo das senhas
 harness/00-preflight.sh, 05-senha.sh, 10-instalar.sh, 20-verificar.sh, 30-desktop.sh   instalação
-harness/40-modelo.sh, 50-alma.sh, 60-hubs.sh                                            onboarding
+harness/40-modelo.sh, 50-alma.sh, 60-hubs.sh, 70-telegram.sh                            onboarding
 harness/status.sh, logs.sh, atualizar.sh, backup.sh, senha.sh     operação (rodam na VPS por SSH)
 harness/remoto/        o que vai para /opt/hermes na VPS: instalar-vps.sh, compose.yml, Caddyfile, bin/
 alma/                  os templates do SOUL.md e do USER.md; só os cinco campos mudam

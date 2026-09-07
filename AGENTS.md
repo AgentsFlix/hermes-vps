@@ -178,7 +178,33 @@ bash harness/60-hubs.sh provar
 As skills são instaladas de tags fixas e passam pelo scanner do Hermes **sem `--force`**. Se o
 scanner bloquear, não force: pare e mostre a decisão ao usuário.
 
-### Fase 8 · entrega
+### Fase 8 · Telegram: o agente sai do painel
+
+O Hermes passa a atender por Telegram. Duas coisas vêm do usuário, e você não consegue pegar por
+ele: o token do bot (@BotFather) e o Id numérico dele (@userinfobot). Mostre o roteiro e espere:
+
+```bash
+bash harness/70-telegram.sh roteiro
+bash harness/70-telegram.sh criar      # abre config/telegram.local
+```
+
+Diga: *"Cole o token do bot e o seu Id, salve, e me responda: Feito."* Depois do "Feito":
+
+```bash
+bash harness/70-telegram.sh validar    # forma do token e dos ids, sem mostrar o token
+bash harness/70-telegram.sh aplicar    # grava, reinicia e espera a plataforma conectar
+```
+
+O `aplicar` só apaga o token do arquivo depois que o gateway reporta `telegram: connected`. Se
+não conectar, o token fica e o erro aparece em `bash harness/logs.sh 200`. Causa mais comum:
+token colado pela metade, ou o mesmo bot já em uso por outro programa (o Telegram só deixa um).
+
+**A lista de ids não é opcional.** Sem ela, qualquer pessoa que descobrir o bot conversa com o
+agente do usuário. O script recusa aplicar com a lista vazia.
+
+Feche pedindo ao usuário para abrir o bot no Telegram e mandar um oi.
+
+### Fase 9 · entrega
 
 Diga ao usuário, nesta ordem:
 
@@ -187,7 +213,7 @@ Diga ao usuário, nesta ordem:
    Sugira o primeiro pedido: uma das três tarefas da primeira semana.
 3. Maton e Zernio: peça "faça o inventário de leitura do Maton" ou "liste minhas contas no
    Zernio". As skills começam sempre em modo leitura e pedem um sim antes de qualquer escrita.
-4. Canais de mensagem (Telegram, WhatsApp, Discord) se configuram no painel, em API Keys.
+4. O bot do Telegram já responde; WhatsApp e Discord se configuram no painel, em API Keys.
 5. A página `Meu Hermes` no Desktop tem tudo isso e os comandos de operação.
 
 ## Operação depois de instalado
@@ -202,6 +228,8 @@ Diga ao usuário, nesta ordem:
 | "o Hermes saiu da minha conta do ChatGPT" | `bash harness/40-modelo.sh status`; se `logged out`, refaça a Fase 5 |
 | "mudar o nome ou o tom do agente" | edite `config/alma.env` e rode `bash harness/50-alma.sh aplicar` |
 | "trocar uma chave do Maton ou do Zernio" | `bash harness/60-hubs.sh criar` → usuário cola → `aplicar` |
+| "o bot do Telegram parou" | `bash harness/70-telegram.sh provar`; se estiver em erro, `bash harness/logs.sh 200` |
+| "trocar o bot do Telegram / liberar outra pessoa" | `bash harness/70-telegram.sh criar` → usuário cola → `aplicar` |
 | "refaz a página do Desktop" | `bash harness/30-desktop.sh` |
 
 ## Quando algo falha
@@ -215,6 +243,8 @@ Diga ao usuário, nesta ordem:
 | `concluir` diz `logged out` | o login não gravou credencial | `bash harness/logs.sh`; refazer a Fase 5 |
 | chat responde "authentication failed" | provider gravado sem credencial, ou credencial expirada | `bash harness/40-modelo.sh status` e refazer a Fase 5 |
 | skill bloqueada pelo scanner | a skill mudou upstream | não use `--force`; mostre a decisão ao usuário |
+| telegram fica em `error` | token pela metade, ou o bot já está em uso por outro programa | `bash harness/logs.sh 200`; refazer a Fase 8 com o token inteiro |
+| o bot não responde a ninguém | o Id do usuário não está em `TELEGRAM_ALLOWED_USERS` | pegar o Id no @userinfobot e refazer o `aplicar` |
 | "porta 80 ou 443 em uso" no preflight | template com painel ou outro serviço | VPS limpa ou `MODO=tunel` |
 | `docker compose pull` lento ou falha | rede da VPS | rodar `bash harness/10-instalar.sh` de novo; é idempotente |
 
@@ -244,6 +274,11 @@ Diga ao usuário, nesta ordem:
 - O `.env` de `/opt/data` é lido pelo Hermes ao subir. Chave nova só vale depois do restart, e
   os scripts já reiniciam. O Hermes semeia um `SOUL.md` padrão no primeiro boot e nunca mais
   toca num `SOUL.md` customizado: o da Fase 6 fica.
+- **Telegram é configuração de ambiente, não comando.** Não existe `hermes telegram`: o gateway lê
+  `TELEGRAM_BOT_TOKEN` e `TELEGRAM_ALLOWED_USERS` do `.env` ao subir e abre a conexão sozinho. A
+  prova é `gateway_platforms.telegram.state == "connected"` no `/api/status`, que é o que o
+  `plataformas.sh` lê. Nunca chame a API do Telegram com o token na URL para "testar": o estado do
+  gateway já é a prova, e a URL vaza em log e em histórico.
 - Maton e Zernio entram como **skills**, não como servidores MCP. Tool MCP entra no schema de
   toda chamada e custa tokens por mensagem mesmo sem uso; a skill só carrega quando o pedido é
   sobre aquilo. As duas skills fazem descoberta em modo leitura e pedem aprovação antes de
