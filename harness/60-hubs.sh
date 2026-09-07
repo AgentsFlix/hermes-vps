@@ -52,6 +52,14 @@ ARQ
         bash "$0" validar >/dev/null || morrer "corrija as chaves antes: bash harness/60-hubs.sh criar"
         log "gravando as chaves no .env do Hermes (só as linhas preenchidas vão pelo stdin do SSH)"
         grep -E '^(MATON_API_KEY|ZERNIO_API_KEY)=.+' "$CHAVES_ARQ" | vps "bash $REMOTO_DIR/bin/env-add.sh" || morrer "não consegui gravar as chaves"
+        # prova ANTES de apagar o que o usuário colou: gravação que falha em silêncio já custou uma colagem
+        prova="$(vps "bash $REMOTO_DIR/bin/provar-env.sh MATON_API_KEY ZERNIO_API_KEY")"
+        printf '%s\n' "$prova"
+        for k in MATON_API_KEY ZERNIO_API_KEY; do
+            [ -n "$(campo_de "$CHAVES_ARQ" "$k")" ] || continue
+            printf '%s\n' "$prova" | grep -q "$k: [1-9]" || morrer "$k não chegou ao .env do Hermes. As chaves continuam em $CHAVES_ARQ; não apaguei nada."
+        done
+        ok "as duas pontas conferem: o que foi colado está no .env do Hermes"
         log "reiniciando o Hermes para carregar o .env"; reiniciar_hermes
         for par in "MATON_API_KEY|$MATON_SKILL_URL|maton-operations" "ZERNIO_API_KEY|$ZERNIO_SKILL_URL|zernio-operations"; do
             IFS='|' read -r k url nome <<< "$par"
@@ -70,7 +78,7 @@ ARQ
         carregar_config
         echo "skills instaladas:"; hermes_na_vps "skills list" | grep -E 'maton|zernio' || echo "  (nenhuma das duas)"
         echo "chaves no .env do Hermes (nome e tamanho):"
-        vps "docker exec --user hermes hermes sh -c 'for k in MATON_API_KEY ZERNIO_API_KEY; do v=\$(sed -n \"s/^\$k=//p\" /opt/data/.env | head -1); [ -n \"\$v\" ] && echo \"  \$k: \${#v} caracteres\" || echo \"  \$k: ausente\"; done'"
+        vps "bash $REMOTO_DIR/bin/provar-env.sh MATON_API_KEY ZERNIO_API_KEY"
         echo; echo "Teste real, pelo painel: peça ao agente \"faça o inventário de leitura do Maton\" e \"liste minhas contas no Zernio\"." ;;
     *) echo "uso: bash harness/60-hubs.sh criar|validar|aplicar|provar"; exit 2 ;;
 esac

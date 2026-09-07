@@ -45,7 +45,7 @@ AGENTE=
 FAZ=
 # informal ou formal
 TOM=
-# Três tarefas que ele quer tirar da mão na primeira semana, separadas por ponto e vírgula
+# UMA tarefa que ele quer tirar da mão na primeira semana (o agente oferece 5 opções; aceita outra)
 TAREFAS=
 ARQ
         ok "criei $ALMA_ARQ. Faça as 5 perguntas ao usuário e preencha os campos (pode editar o arquivo você mesmo)." ;;

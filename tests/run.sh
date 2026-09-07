@@ -88,13 +88,17 @@ rc=0; CODEX_LOG="$TMP/codex.log" bash harness/remoto/bin/codex-login.sh esperar 
 printf 'Saved openai-codex OAuth device-code credentials: "conta"\n' >> "$TMP/codex.log"
 CODEX_LOG="$TMP/codex.log" bash harness/remoto/bin/codex-login.sh esperar 5 >/dev/null && echo "ok esperar devolve 0 ao entrar" || { echo "FALHA: esperar 0"; falhas=$((falhas+1)); }
 
-passo "env-add: upsert no .env sem imprimir valor (python local)"
-sed -n "/<<'PY'/,/^PY$/p" harness/remoto/bin/env-add.sh | sed '1d;$d' > "$TMP/env-add.py"
+passo "env-upsert: upsert no .env sem imprimir valor"
 printf 'OUTRA=1\nMATON_API_KEY=velha\n' > "$TMP/env-teste"
-saida="$(printf 'MATON_API_KEY=nova-chave-de-teste-1234567890\nZERNIO_API_KEY=sk_zernio_teste_0123456789\n' | HERMES_ENV_PATH="$TMP/env-teste" python3 "$TMP/env-add.py")"
-echo "$saida" | grep -qE 'nova-chave|sk_zernio' && { echo "FALHA: env-add ecoou valor"; falhas=$((falhas+1)); }
+saida="$(printf 'MATON_API_KEY=nova-chave-de-teste-1234567890\nZERNIO_API_KEY=sk_zernio_teste_0123456789\n' | HERMES_ENV_PATH="$TMP/env-teste" python3 harness/remoto/bin/env-upsert.py)"
+echo "$saida" | grep -qE 'nova-chave|sk_zernio' && { echo "FALHA: env-upsert ecoou valor"; falhas=$((falhas+1)); }
 grep -q '^OUTRA=1$' "$TMP/env-teste" && [ "$(grep -c '^MATON_API_KEY=' "$TMP/env-teste")" = 1 ] && grep -q '^MATON_API_KEY=nova-chave-de-teste-1234567890$' "$TMP/env-teste" && grep -q '^ZERNIO_API_KEY=' "$TMP/env-teste" && echo "ok upsert preserva o resto e substitui a chave" || { echo "FALHA: upsert"; falhas=$((falhas+1)); }
-printf 'PATH=/x\n' | HERMES_ENV_PATH="$TMP/env-teste" python3 "$TMP/env-add.py" >/dev/null 2>&1 && { echo "FALHA: aceitou PATH"; falhas=$((falhas+1)); } || echo "ok recusa nome proibido"
+printf 'PATH=/x\n' | HERMES_ENV_PATH="$TMP/env-teste" python3 harness/remoto/bin/env-upsert.py >/dev/null 2>&1 && { echo "FALHA: aceitou PATH"; falhas=$((falhas+1)); } || echo "ok recusa nome proibido"
+rc=0; printf '\n' | HERMES_ENV_PATH="$TMP/env-teste" python3 harness/remoto/bin/env-upsert.py >/dev/null 2>&1 || rc=$?
+[ "$rc" -eq 2 ] && echo "ok stdin vazio falha alto (nunca em silêncio)" || { echo "FALHA: stdin vazio devolveu $rc"; falhas=$((falhas+1)); }
+
+passo "env-add: o código Python não pode roubar o stdin dos dados"
+grep -q "python3 -c" harness/remoto/bin/env-add.sh && ! grep -qE "python3 - <<" harness/remoto/bin/env-add.sh && echo "ok código por -c, dados por stdin" || { echo "FALHA: env-add voltou a mandar código pelo stdin"; falhas=$((falhas+1)); }
 
 passo "alma: template sem placeholder"
 printf 'DONO=Maria\nAGENTE=Sofia\nFAZ=cuida de uma clínica em Manaus\nTOM=informal\nTAREFAS=responder e-mail; agendar consulta; resumir reunião\n' > $CFG/alma.env

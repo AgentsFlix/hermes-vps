@@ -17,3 +17,19 @@
   3 minutos. `docker compose pull` que falhar no meio se resolve rodando `10-instalar.sh` de novo.
 - **Desktop remoto exige o painel acessível pelo mesmo host que você digita.** Com o Caddy isso é
   automático. Não troque o hostname sem reinstalar.
+
+## Modo template (VPS com o aplicativo Hermes da Hostinger)
+
+- **O painel é o da Hostinger, atrás do Traefik**, em `https://<projeto>.<hostname>.hstgr.cloud`.
+  O usuário e a senha são os que você digitou na tela "Configurar Hermes Agent", não os do harness.
+- **O template publica a porta do painel numa porta alta do host, em HTTP puro e aberta na
+  internet.** O `10-instalar.sh` remove esse bloco `ports:` do compose (backup em
+  `docker-compose.yml.antes-do-harness`) e sobe de novo. O Traefik continua servindo com TLS.
+- **Atualizar e fazer backup são do painel da Hostinger** (Gerenciador Docker → Gerenciar). Os
+  scripts `atualizar.sh` e `backup.sh` recusam rodar em modo template, de propósito.
+- **O executor do Hermes bloqueia `sh -c` e `python3 -c` com script inline** (verdict "Command
+  flagged as dangerous"). Skill que precise de chamada autenticada deve usar `curl` com a
+  variável de ambiente, que passa. Medido em 07/09/2026 na v0.21.0.
+- **`docker exec` não lê o `.env` do Hermes.** Um shell novo dentro do container não tem as
+  variáveis; quem lê é o processo do gateway, ao subir. Testar credencial por `docker exec` dá
+  falso negativo: use `bash harness/60-hubs.sh provar`, que lê o arquivo.

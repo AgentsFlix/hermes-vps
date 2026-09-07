@@ -33,13 +33,13 @@ case "${1:-}" in
     esperar)
         max="${2:-540}"; t=0
         while [ "$t" -lt "$max" ]; do
-            if limpo | grep -qE 'Saved .*credentials|Login successful'; then echo "ENTROU"; exit 0; fi
+            if limpo | grep -qE 'Added .*credential|Saved .*credentials|Login successful'; then echo "ENTROU"; exit 0; fi
             if limpo | grep -qiE 'timed out|Error|Failed|Traceback|cancelled'; then echo "FALHOU:"; limpo | tail -8; exit 1; fi
             sleep 5; t=$((t+5))
         done
         echo "AINDA ESPERANDO (${t}s). O usuário já digitou o código na página?"; exit 3 ;;
     concluir)
-        limpo | grep -qE 'Saved .*credentials|Login successful' || { echo "o login não terminou; rode esperar" >&2; exit 1; }
+        limpo | grep -qE 'Added .*credential|Saved .*credentials|Login successful' || { echo "o login não terminou; rode esperar" >&2; exit 1; }
         docker exec "$C" hermes config set model.provider openai-codex >/dev/null
         docker exec "$C" hermes config set model.default "$MODELO" >/dev/null
         hermes_restart || { echo "o Hermes não voltou depois do restart" >&2; exit 1; }

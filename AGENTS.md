@@ -145,7 +145,10 @@ Cinco perguntas, no chat (nada aqui é segredo):
 2. Que nome você quer dar ao seu agente?
 3. O que você faz? Uma frase começando com verbo ("cuido de uma clínica em Manaus").
 4. Tom: informal ou formal?
-5. Três tarefas que você quer tirar da sua mão na primeira semana.
+5. Uma tarefa, só uma, que você quer tirar da sua mão nesta primeira semana. Ofereça pelo menos
+   estas cinco e aceite outra se ele preferir: ler os e-mails e dizer o que importa; responder
+   mensagens no WhatsApp; enviar um relatório diário; organizar a agenda da semana; pesquisar
+   um tema e resumir.
 
 ```bash
 bash harness/50-alma.sh criar          # cria config/alma.env; preencha os 5 campos você mesmo

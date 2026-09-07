@@ -98,10 +98,24 @@ exposição pública com conta gerenciada, o Hermes oferece OAuth pelo Nous Port
 
 ## Estado
 
-O núcleo (instalação, gate de senha, HTTPS, página do Desktop) e o onboarding (login por código
-de dispositivo, SOUL.md, hubs) foram provados contra a imagem oficial v0.21.0 num container
-local e num sshd descartável, em 06/09/2026. A passagem de ponta a ponta numa VPS real da
-Hostinger ainda não foi feita. Se você for o primeiro, abra uma issue com o que viu.
+**Provado de ponta a ponta numa VPS real em 07/09/2026**, no caminho que o cliente compra: VPS
+Hostinger KVM 2 com o aplicativo "Hermes Agent" (Docker + Traefik), Hermes v0.21.0. As oito fases
+passaram, com prova em cada uma:
+
+| fase | prova |
+|---|---|
+| bootstrap + preflight | template reconhecido; chave SSH autorizada pela senha do arquivo |
+| instalar (modo template) | porta do painel em HTTP puro fechada, com backup do compose |
+| verificar | 9 de 9: gate de senha, HTTPS pelo Traefik, nenhuma porta publicada |
+| desktop | página `Meu Hermes` com o usuário certo do painel |
+| modelo | o agente respondeu "Modelo: gpt-5.6-terra; provedor: openai-codex" |
+| alma | o agente se apresentou pelo nome escolhido e disse quem é o dono |
+| hubs | as duas chaves no `.env`, as duas skills instaladas sem `--force`, as duas APIs em 200 |
+
+Duas coisas que só apareceram na VPS real e já estão corrigidas aqui: o modo template (o preflight
+antigo recusava a VPS por causa das portas do Traefik) e uma gravação de credencial que falhava em
+silêncio (o código Python ocupava o mesmo canal dos dados). Hoje a fase de hubs confere as duas
+pontas antes de apagar o que você colou.
 
 ## Licença
 
