@@ -1,11 +1,23 @@
 # hermes-vps · instale o Hermes Agent na sua VPS com um agente
 
+**Cole isto no Claude Code, no Codex ou no Antigravity, numa pasta vazia:**
+
+```text
+Instale e configure o meu Hermes Agent seguindo https://github.com/AgentsFlix/hermes-vps
+Clone o repositório nesta pasta, leia o AGENTS.md inteiro antes de rodar qualquer comando, e
+siga as fases na ordem usando só os scripts de harness/. Não improvise comando fora deles.
+Pare em cada fase que precisar de mim, uma coisa por vez, e me diga exatamente o que fazer.
+```
+
+O resto é com ele. Você só preenche três arquivos que ele abre na sua tela e responde "Feito".
+
+---
+
 Um harness: o repositório que o **seu agente** (Claude Code, Codex ou outro) lê e executa para
 instalar o [Hermes Agent](https://github.com/NousResearch/hermes-agent) numa VPS e deixá-lo
 pronto: painel web com senha e HTTPS, Hermes respondendo pela **sua assinatura do ChatGPT**, com
-o nome e o tom que você escolher, e os hubs **Maton** e **Zernio** instalados como skills. Você
-cola o acesso SSH da VPS, preenche dois arquivos que ele abre para você e responde "Feito". O
-resto é dele.
+o nome e o tom que você escolher, os hubs **Maton** e **Zernio** instalados como skills, e um bot
+no **Telegram** que só conversa com você.
 
 Harness é o conjunto de regras que segura o agente no trilho. Aqui ele é o `AGENTS.md` mais os
 scripts de `harness/`, cada um com uma prova binária no fim.

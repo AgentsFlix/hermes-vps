@@ -75,3 +75,19 @@ tag fixa, e o critério de aceite é passar no scanner do Hermes numa instância
 arquivo ilegível para o gateway; por isso `env-add.sh` roda `docker exec --user hermes` e faz
 upsert por nome, com lista de nomes proibidos (`PATH`, `LD_PRELOAD`...). Chave nova só vale
 depois do restart, e o script reinicia.
+
+**O prompt que o usuário cola não dita o primeiro passo.** A primeira versão terminava com
+"comece me pedindo o acesso SSH da VPS", e isso virou mentira no dia em que o endereço passou
+para dentro do arquivo de colagem. Texto que a pessoa já copiou não se corrige; o repositório,
+sim. Por isso o prompt manda **ler o `AGENTS.md` e seguir as fases**, e nada mais sobre ordem.
+
+Duas frases dele não são enfeite, e cada uma paga um erro observado em teste:
+
+- *"usando só os scripts de harness/. Não improvise comando fora deles"* segura o agente de sair
+  inventando comando na VPS do usuário quando algo não bate com o que ele esperava.
+- *"pare em cada fase que precisar de mim, uma coisa por vez"* impede que ele atropele as cinco
+  paradas humanas (endereço e senhas, opção no ChatGPT, as cinco respostas, chaves dos hubs,
+  bot do Telegram) despejando tudo de uma vez.
+
+`CLAUDE.md` e `GEMINI.md` só importam o `AGENTS.md`, para Claude Code e Antigravity/Gemini
+carregarem sozinhos o mesmo contrato que o Codex lê direto.
