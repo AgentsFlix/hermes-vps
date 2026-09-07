@@ -17,12 +17,12 @@ Duas coisas o usuário pega no Telegram, no celular ou no app do computador:
   1. Abra uma conversa com @BotFather
   2. Mande /newbot
   3. Escolha um nome (o que aparece na conversa) e um usuário terminado em "bot"
-  4. Ele devolve uma linha tipo 8123456789:AAF... — esse é o token
+  4. Ele devolve uma linha tipo 8123456789:AAF... Essa linha é o token
 
   O ID DELE
   5. Abra uma conversa com @userinfobot
   6. Mande /start
-  7. Ele responde com "Id: 123456789" — esse número é o dele
+  7. Ele responde com "Id: 123456789". Esse número é o dele
 
 O Id é quem pode falar com o bot: sem ele na lista, o Hermes ignora a mensagem em silêncio.
 Depois disso rode: bash harness/70-telegram.sh criar

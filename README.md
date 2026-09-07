@@ -86,6 +86,7 @@ harness/configurar.sh  bootstrap: lê "ssh root@IP", grava o config, abre o arqu
 harness/00-preflight.sh, 05-senha.sh, 10-instalar.sh, 20-verificar.sh, 30-desktop.sh   instalação
 harness/40-modelo.sh, 50-alma.sh, 60-hubs.sh, 70-telegram.sh                            onboarding
 harness/status.sh, logs.sh, atualizar.sh, backup.sh, senha.sh, chave.sh   operação (por SSH)
+harness/sonda.sh       leitura pura: o que já existe nesta VPS, antes de mexer em qualquer coisa
 harness/remoto/        o que vai para /opt/hermes na VPS: instalar-vps.sh, compose.yml, Caddyfile, bin/
 alma/                  os templates do SOUL.md e do USER.md; só os cinco campos mudam
 desktop/template.html  a página gerada no Desktop
