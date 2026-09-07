@@ -5,18 +5,25 @@ source "$(dirname "$0")/lib.sh"
 
 log "harness hermes-vps · preflight"
 
-# 1. config e arquivo de acesso
-faltou=0
-if [ ! -f "$CONFIG" ]; then
-    cp "$CONFIG_EXEMPLO" "$CONFIG"; faltou=1
-    aviso "criei $CONFIG: falta VPS_HOST (o IP da VPS; o agente pode escrever, não é segredo)"
-fi
+# 1. o endereço vem do arquivo que o usuário preencheu (ou já está no config)
 if [ ! -f "$ACESSO_ARQ" ]; then
-    criar_acesso_esqueleto; faltou=1
-    aviso "criei $ACESSO_ARQ: o usuário preenche VPS_ROOT_SENHA (do hPanel) e PAINEL_SENHA (ele escolhe)"
+    criar_acesso_esqueleto
+    aviso "criei $ACESSO_ARQ: o usuário preenche o endereço da VPS e as duas senhas"
     abrir_editor "$ACESSO_ARQ"
+    echo; aviso "peça para ele preencher e salvar, e rode de novo: bash harness/00-preflight.sh"
+    exit 2
 fi
-[ "$faltou" = 0 ] || { echo; aviso "preencha e rode de novo: bash harness/00-preflight.sh"; exit 2; }
+if [ ! -f "$CONFIG" ] || ! grep -qE '^VPS_HOST=.+' "$CONFIG"; then
+    endereco="$(campo_de "$ACESSO_ARQ" ACESSO_SSH)"
+    if [ -z "$endereco" ]; then
+        falha "falta o endereço da VPS em $ACESSO_ARQ (linha ACESSO_SSH)"
+        aviso "peça ao usuário para trocar COLE_O_IP_AQUI pelo IP da VPS, salvar, e rode de novo"
+        exit 2
+    fi
+    read -r u h pt <<< "$(parse_acesso "$endereco")" || { aviso "corrija a linha ACESSO_SSH em $ACESSO_ARQ e rode de novo"; exit 2; }
+    escrever_config "$u" "$h" "$pt" "${MODO_INICIAL:-publico}"
+    ok "endereço lido do arquivo: $u@$h porta $pt"
+fi
 carregar_config
 ok "config: host=$VPS_HOST usuário=$SSH_USER porta=$SSH_PORT modo=$MODO painel_usuario=$PAINEL_USUARIO"
 

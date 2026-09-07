@@ -74,9 +74,10 @@
   </section>
 
   <section>
-    <h2>As três chaves da sua VPS, e onde cada uma está</h2>
-    <p class="meta">Guarde isto. É o que dá acesso ao seu servidor.</p>
+    <h2>O que abre a sua VPS, e onde cada peça está</h2>
+    <p class="meta">Guarde isto. São as quatro peças de acesso ao seu servidor.</p>
     <table>
+      <tr><td><b>Endereço da VPS</b></td><td><code>{{SSH_USER}}@{{HOST}}</code> na porta {{SSH_PORT}}. Está no painel da Hostinger, em VPS, Visão geral: o IP e o nome de usuário SSH. Não é segredo sozinho, mas é metade do caminho: com ele e a senha root, alguém entra. Cuidado ao mandar print dessa tela.</td></tr>
       <tr><td><b>Senha do painel</b></td><td>A que você escolheu. Entra em <code>{{URL}}</code> com o usuário <b>{{USUARIO}}</b>. Vive só na VPS.</td></tr>
       <tr><td><b>Chave SSH</b></td><td>Criada no seu computador durante a instalação, só para esta VPS:<br><code>{{SSH_KEY}}</code><br>Impressão digital: <code>{{SSH_FP}}</code><br>É ela que o seu agente usa para operar a VPS. Quem tiver esse arquivo entra como administrador. Trocou de computador, refaça a instalação para autorizar a nova.</td></tr>
       <tr><td><b>Senha root</b></td><td>A do painel da Hostinger. Continua valendo como reserva e ficou guardada em <code>config/acesso.local</code>, na pasta do harness. Dá para trocar a qualquer momento no hPanel.</td></tr>

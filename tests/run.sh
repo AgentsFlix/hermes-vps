@@ -14,10 +14,10 @@ for f in harness/*.sh harness/remoto/*.sh harness/remoto/bin/*.sh tests/run.sh; 
 if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     passo "shellcheck"
     docker run --rm -v "$PWD:/mnt" -w /mnt koalaman/shellcheck:stable -x -S warning \
-        harness/*.sh harness/remoto/*.sh harness/remoto/bin/*.sh && echo "ok shellcheck" || falhas=$((falhas+1))
+        harness/*.sh harness/remoto/*.sh harness/remoto/bin/*.sh && echo "ok shellcheck" || { echo "FALHA: shellcheck"; falhas=$((falhas+1)); }
     passo "caddy validate"
     docker run --rm -e HOSTNAME_TLS=exemplo.hstgr.cloud -v "$PWD/harness/remoto/Caddyfile:/etc/caddy/Caddyfile:ro" \
-        caddy:2 caddy validate --config /etc/caddy/Caddyfile 2>&1 | grep -q "Valid configuration" && echo "ok caddy" || falhas=$((falhas+1))
+        caddy:2 caddy validate --config /etc/caddy/Caddyfile 2>&1 | grep -q "Valid configuration" && echo "ok caddy" || { echo "FALHA: caddy validate (imagem caddy:2 baixou? rede?)"; falhas=$((falhas+1)); }
     passo "compose config"
     cat > "$TMP/.env" <<ENV
 HERMES_IMAGEM=nousresearch/hermes-agent:latest
@@ -28,7 +28,7 @@ PAINEL_SENHA=senha-de-teste-local-123
 PAINEL_SEGREDO=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 COMPOSE_PROFILES=publico
 ENV
-    docker compose -p hermes-teste -f harness/remoto/compose.yml --env-file "$TMP/.env" config >/dev/null && echo "ok compose" || falhas=$((falhas+1))
+    docker compose -p hermes-teste -f harness/remoto/compose.yml --env-file "$TMP/.env" config >/dev/null && echo "ok compose" || { echo "FALHA: compose config"; falhas=$((falhas+1)); }
 else
     echo "(sem docker: pulando shellcheck, caddy e compose)"
 fi
@@ -56,16 +56,32 @@ CFG
 done
 rm -f $CFG/hermes-vps.env $CFG/.estado
 
-passo "configurar: parse do acesso SSH"
-for ent in "ssh root@203.0.113.10" "root@203.0.113.10" "203.0.113.10" "ssh -p 2222 root@203.0.113.10" "ssh root@203.0.113.10 -p 2222" "root@srv1.hstgr.cloud:2222"; do
-    HERMES_VPS_SEM_ABRIR=1 bash harness/configurar.sh "$ent" >/dev/null 2>&1 || { echo "FALHA: configurar não aceitou: $ent"; falhas=$((falhas+1)); continue; }
-    h="$(sed -n 's/^VPS_HOST=//p' $CFG/hermes-vps.env)"; p="$(sed -n 's/^SSH_PORT=//p' $CFG/hermes-vps.env)"
-    case "$ent" in *2222*) esp=2222 ;; *) esp=22 ;; esac
-    if [ "$p" = "$esp" ] && [ -n "$h" ]; then echo "ok configurar: '$ent' → $h:$p"; else echo "FALHA: '$ent' → $h:$p"; falhas=$((falhas+1)); fi
+passo "configurar: sem argumento, cria o arquivo com os três campos"
+rm -f "$CFG/hermes-vps.env" "$CFG/acesso.local"
+HERMES_VPS_SEM_ABRIR=1 bash harness/configurar.sh >/dev/null 2>&1
+grep -q '^ACESSO_SSH=ssh root@COLE_O_IP_AQUI$' "$CFG/acesso.local" && grep -q '^VPS_ROOT_SENHA=$' "$CFG/acesso.local" && grep -q '^PAINEL_SENHA=$' "$CFG/acesso.local" && echo "ok arquivo com endereço, senha root e senha do painel" || { echo "FALHA: esqueleto"; falhas=$((falhas+1)); }
+[ ! -f "$CFG/hermes-vps.env" ] && echo "ok não escreve config antes de ter o endereço" || { echo "FALHA: escreveu config cedo"; falhas=$((falhas+1)); }
+[ "$(stat -f %Lp "$CFG/acesso.local" 2>/dev/null || stat -c %a "$CFG/acesso.local")" = 600 ] && echo "ok acesso.local com 600"
+
+passo "parse_acesso: formas que o usuário cola"
+for par in "ssh root@203.0.113.10|root 203.0.113.10 22" "root@203.0.113.10|root 203.0.113.10 22" "203.0.113.10|root 203.0.113.10 22" "ssh -p 2222 root@203.0.113.10|root 203.0.113.10 2222" "ssh root@203.0.113.10 -p 2222|root 203.0.113.10 2222" "root@srv1.hstgr.cloud:2222|root srv1.hstgr.cloud 2222"; do
+    ent="${par%%|*}"; esp="${par##*|}"
+    got="$(bash -c 'source harness/lib.sh; parse_acesso "$1"' _ "$ent" 2>/dev/null)"
+    [ "$got" = "$esp" ] && echo "ok '$ent' -> $got" || { echo "FALHA: '$ent' -> '$got' (esperado '$esp')"; falhas=$((falhas+1)); }
 done
-[ -f $CFG/acesso.local ] && [ "$(stat -f %Lp $CFG/acesso.local 2>/dev/null || stat -c %a $CFG/acesso.local)" = 600 ] && echo "ok acesso.local criado com 600"
-grep -q '^VPS_ROOT_SENHA=$' $CFG/acesso.local && grep -q '^PAINEL_SENHA=$' $CFG/acesso.local && echo "ok acesso.local com os dois campos vazios"
-rm -f $CFG/hermes-vps.env $CFG/hermes-vps.env.bak $CFG/acesso.local
+rc=0; bash -c 'source harness/lib.sh; parse_acesso "ssh root@COLE_O_IP_AQUI"' >/dev/null 2>&1 || rc=$?
+[ "$rc" -ne 0 ] && echo "ok recusa o placeholder não substituído" || { echo "FALHA: aceitou COLE_O_IP_AQUI"; falhas=$((falhas+1)); }
+
+passo "config nasce do arquivo que o usuário preencheu"
+rm -f "$CFG/hermes-vps.env"
+printf 'ACESSO_SSH=ssh root@203.0.113.10\nVPS_ROOT_SENHA=x\nPAINEL_SENHA=Senha.valida-2026!\n' > "$CFG/acesso.local"
+bash -c 'source harness/lib.sh
+e="$(campo_de "$ACESSO_ARQ" ACESSO_SSH)"
+read -r u h p <<< "$(parse_acesso "$e")"
+escrever_config "$u" "$h" "$p" publico' || { echo "FALHA: escrever_config"; falhas=$((falhas+1)); }
+grep -q '^VPS_HOST=203.0.113.10$' "$CFG/hermes-vps.env" 2>/dev/null && grep -q '^SSH_USER=root$' "$CFG/hermes-vps.env" && echo "ok config escrito a partir do arquivo" || { echo "FALHA: config"; falhas=$((falhas+1)); }
+grep -q 'COLE_O_IP_AQUI' "$CFG/hermes-vps.env" && { echo "FALHA: placeholder vazou para o config"; falhas=$((falhas+1)); }
+rm -f "$CFG/hermes-vps.env" "$CFG/hermes-vps.env.bak" "$CFG/acesso.local" "$CFG/.estado"
 
 passo "senha: validação sem eco"
 printf 'VPS_ROOT_SENHA=raiz-de-teste\nPAINEL_SENHA=curta\n' > $CFG/acesso.local

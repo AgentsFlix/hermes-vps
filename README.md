@@ -36,16 +36,16 @@ fases na ordem, usando só os scripts de harness/. Pare a cada fase que pedir al
 exatamente o que fazer. Comece me pedindo o acesso SSH da VPS.
 ```
 
-O agente lê `AGENTS.md` e começa perguntando o acesso SSH da VPS (a linha `ssh root@IP` do
-hPanel). Depois ele abre um arquivo na sua tela: você cola a senha root, escolhe a senha do
-painel, salva e responde **Feito**. Ele instala, verifica, e segue para o onboarding: liga o
+O agente lê `AGENTS.md` e abre um arquivo na sua tela com três campos: o endereço da VPS (você
+troca `COLE_O_IP_AQUI` pelo IP que está no painel da Hostinger), a senha root e a senha que você
+escolhe para o painel. Preenche, salva, responde **Feito**. Ele instala, verifica, e segue para o onboarding: liga o
 Hermes na sua conta do ChatGPT (você digita um código numa página), faz cinco perguntas sobre
 você e sobre o que quer delegar, e abre um segundo arquivo para as chaves do Maton e do Zernio.
 
 Quer fazer à mão? É a mesma sequência:
 
 ```bash
-bash harness/configurar.sh "ssh root@IP"   # grava o config e abre o arquivo das senhas
+bash harness/configurar.sh                 # abre o arquivo: endereço da VPS e as duas senhas
 bash harness/05-senha.sh validar           # confere sem mostrar
 bash harness/00-preflight.sh               # entra com a senha, autoriza a chave, decide o https
 bash harness/10-instalar.sh                # Docker + Hermes + Caddy na VPS

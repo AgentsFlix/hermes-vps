@@ -15,14 +15,14 @@ versao="${VERSAO:-não medida}"
 [ "$MODO" = tunel ] && tunel_arq="Abrir Meu Hermes (túnel)" || tunel_arq=""
 
 fp="$(ssh-keygen -lf "$SSH_KEY.pub" 2>/dev/null | awk '{print $2}')"
-T_SSH_KEY="$SSH_KEY" T_SSH_FP="${fp:-não medida}" \
+T_SSH_KEY="$SSH_KEY" T_SSH_FP="${fp:-não medida}" T_SSH_USER="$SSH_USER" T_SSH_PORT="$SSH_PORT" \
 T_URL="$URL" T_HOST="$VPS_HOST" T_MODO="$MODO" T_SSH_CMD="$ssh_cmd" T_DATA="$data" \
 T_USUARIO="${PAINEL_USUARIO_REAL:-$PAINEL_USUARIO}" T_VERSAO="$versao" T_REPO="$REPO_URL" T_HOSTNAME="${HOSTNAME_TLS:-$VPS_HOST}" \
 T_TUNEL_ARQ="$tunel_arq" T_RAIZ="$RAIZ" \
 perl -0pe '
     if ($ENV{T_MODO} eq "publico") { s/<!--TUNEL-->.*?<!--\/TUNEL-->//gs } else { s/<!--PUBLICO-->.*?<!--\/PUBLICO-->//gs }
     s/<!--\/?(TUNEL|PUBLICO)-->//g;
-    for my $k (qw(URL HOST MODO SSH_CMD SSH_KEY SSH_FP DATA USUARIO VERSAO REPO HOSTNAME TUNEL_ARQ RAIZ)) {
+    for my $k (qw(URL HOST MODO SSH_CMD SSH_KEY SSH_FP SSH_USER SSH_PORT DATA USUARIO VERSAO REPO HOSTNAME TUNEL_ARQ RAIZ)) {
         my $v = $ENV{"T_$k"} // ""; s/\{\{$k\}\}/$v/g;
     }
 ' "$RAIZ/desktop/template.html" > "$DESTINO/Meu Hermes.html"

@@ -45,16 +45,23 @@ Tudo o que a instalação precisa está neste repositório. **Use só os scripts
 
 ### Bootstrap · o acesso à VPS
 
-Pergunte ao usuário a linha de acesso SSH da VPS (na Hostinger: hPanel → VPS → Visão geral,
-algo como `ssh root@203.0.113.10`). Depois:
+Não pergunte nada no chat. Abra o arquivo e deixe o usuário preencher tudo de uma vez:
 
 ```bash
-bash harness/configurar.sh "ssh root@203.0.113.10"      # ou: ... "ssh root@IP" tunel
+bash harness/configurar.sh
 ```
 
-O script grava `config/hermes-vps.env`, cria `config/acesso.local` e abre no editor. Diga ao
-usuário: *"Cole a senha root na linha VPS_ROOT_SENHA, escolha uma senha para o painel na linha
-PAINEL_SENHA, salve o arquivo e me responda: Feito."* Espere o "Feito".
+Ele cria `config/acesso.local` com três campos e abre no editor do usuário: o endereço
+(`ACESSO_SSH=ssh root@COLE_O_IP_AQUI`, ele troca só o pedaço do IP), a senha root e a senha que
+ele escolhe para o painel. Diga: *"Nesse arquivo, troque COLE_O_IP_AQUI pelo IP da sua VPS (está
+no painel da Hostinger, em VPS, Visão geral), cole a senha root, escolha uma senha para o painel,
+salve e me responda: Feito."*
+
+Se ele já tiver mandado o endereço (um print da Visão geral, por exemplo), passe direto e o
+arquivo abre com essa linha pronta: `bash harness/configurar.sh "ssh root@203.0.113.10"`. Diga
+também que aquela tela é sensível: ela carrega o endereço e o usuário, metade do que abre a VPS.
+
+O preflight lê o endereço desse arquivo e escreve o config sozinho. Espere o "Feito".
 
 ### Fase 0 · preflight
 
@@ -212,11 +219,12 @@ Feche pedindo ao usuário para abrir o bot no Telegram e mandar um oi.
 Diga ao usuário, nesta ordem:
 
 1. A URL do painel e o usuário (`PAINEL_USUARIO`, padrão `admin`). A senha é a que ele digitou.
-2. **As três chaves da VPS dele, e onde cada uma está.** Ele acabou de ganhar um servidor e não
-   sabe o que dá acesso a ele. Rode `bash harness/chave.sh mostrar` e explique: a senha do painel
-   (só na VPS), a **chave SSH que o harness criou no computador dele** (o arquivo, e que quem o
-   tiver entra como administrador) e a senha root do hPanel, que continua valendo como reserva e
-   ficou em `config/acesso.local`. Diga que a mesma tabela está na página `Meu Hermes`, no Desktop.
+2. **O que abre a VPS dele, e onde cada peça está.** Ele acabou de ganhar um servidor e não
+   sabe o que dá acesso a ele. Rode `bash harness/chave.sh mostrar` e explique as quatro peças: o
+   **endereço** (IP e usuário, que estão na tela Visão geral do hPanel e viajam em qualquer print
+   dela), a senha do painel (só na VPS), a **chave SSH que o harness criou no computador dele** (o
+   arquivo, e que quem o tiver entra como administrador) e a senha root do hPanel, que continua
+   valendo como reserva e ficou em `config/acesso.local`. Diga que a mesma tabela está na página `Meu Hermes`, no Desktop.
    Se ele for parar de usar aquele computador: `bash harness/chave.sh remover`.
 2. **Chat**: o Hermes já responde pela assinatura dele, com o nome e o tom que ele escolheu.
    Sugira o primeiro pedido: uma das três tarefas da primeira semana.

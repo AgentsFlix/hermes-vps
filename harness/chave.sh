@@ -17,6 +17,8 @@ case "${1:-mostrar}" in
         vps "while read -r l; do [ -n \"\$l\" ] && printf '%s\n' \"\$l\" | ssh-keygen -lf - 2>/dev/null | awk '{print \"  \" \$2, \$3}'; done < ~/.ssh/authorized_keys"
         echo
         echo "Quem tiver o arquivo acima entra na sua VPS como administrador."
+        echo "O endereço ($SSH_USER@$VPS_HOST) não é segredo sozinho, mas aparece em qualquer print"
+        echo "da tela Visão geral do hPanel. Com ele e a senha root, alguém entra sem a chave."
         echo "Para tirar este computador: bash harness/chave.sh remover" ;;
     remover)
         f="$(fp)"; [ -n "$f" ] || morrer "não consegui ler a impressão digital de $SSH_KEY.pub"

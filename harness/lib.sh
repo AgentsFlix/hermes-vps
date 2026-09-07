@@ -101,6 +101,30 @@ carregar_config() {
 campo_acesso() { sed -n "s/^$1=//p" "$ACESSO_ARQ" 2>/dev/null | head -1 | tr -d '\r' | sed 's/[[:space:]]*$//'; }
 tem_senha_root() { [ -n "$(campo_acesso VPS_ROOT_SENHA)" ]; }
 
+# Interpreta o endereço como o usuário colou: "ssh root@IP", "root@IP", "IP", "host:2222",
+# com ou sem "-p 2222". Devolve "usuario host porta". Falha alto se não entender.
+parse_acesso() {
+    local entrada="$1" porta=22 alvo usuario host
+    [ -n "$entrada" ] || { falha "endereço vazio"; return 1; }
+    case "$entrada" in *COLE_O_IP_AQUI*) falha "o endereço ainda está com COLE_O_IP_AQUI: troque pelo IP da sua VPS"; return 1 ;; esac
+    if [[ "$entrada" =~ -p[[:space:]]+([0-9]+) ]]; then porta="${BASH_REMATCH[1]}"; fi
+    alvo="$(printf '%s' "$entrada" | sed -E 's/^[[:space:]]*ssh[[:space:]]+//; s/-p[[:space:]]+[0-9]+//; s/[[:space:]]//g')"
+    if [[ "$alvo" =~ ^(.*)@(.*)$ ]]; then usuario="${BASH_REMATCH[1]}"; host="${BASH_REMATCH[2]}"; else usuario=root; host="$alvo"; fi
+    if [[ "$host" =~ ^(.*):([0-9]+)$ ]]; then host="${BASH_REMATCH[1]}"; porta="${BASH_REMATCH[2]}"; fi
+    [[ "$host" =~ ^[A-Za-z0-9.-]+$ ]] || { falha "não entendi o host em: $entrada"; return 1; }
+    [[ "$usuario" =~ ^[a-z_][a-z0-9_-]*$ ]] || { falha "usuário SSH estranho: $usuario"; return 1; }
+    printf '%s %s %s\n' "$usuario" "$host" "$porta"
+}
+
+# Escreve config/hermes-vps.env a partir de um endereço e do modo.
+escrever_config() {
+    local usuario="$1" host="$2" porta="$3" modo="${4:-publico}"
+    case "$modo" in publico|tunel) ;; *) morrer "modo tem que ser publico ou tunel" ;; esac
+    [ -f "$CONFIG" ] && cp "$CONFIG" "$CONFIG.bak"
+    sed -e "s|^VPS_HOST=.*|VPS_HOST=$host|" -e "s|^SSH_USER=.*|SSH_USER=$usuario|" \
+        -e "s|^SSH_PORT=.*|SSH_PORT=$porta|" -e "s|^MODO=.*|MODO=$modo|" "$CONFIG_EXEMPLO" > "$CONFIG"
+}
+
 # OpenSSH >= 8.4 é o mínimo para o agente conseguir entrar na VPS pela senha do arquivo.
 ssh_suporta_askpass() {
     local v; v="$(ssh -V 2>&1 | sed -n 's/^OpenSSH_\([0-9]*\)\.\([0-9]*\).*/\1 \2/p')"
@@ -194,18 +218,26 @@ criar_acesso_esqueleto() {
     umask 077
     cat > "$ACESSO_ARQ" <<'ARQ'
 #  ACESSO À SUA VPS
-#  Preencha as duas linhas em destaque, salve e volte ao chat: Feito
+#  Preencha as três linhas em destaque, salve e volte ao chat: Feito
 
 
-#  1 . SENHA ROOT DA VPS
-#  No painel da Hostinger: VPS, Configurações principais, Alterar senha do root
+#  1 . ENDEREÇO DA VPS
+#  No painel da Hostinger: VPS, Visão geral
+#  Copie o IP e troque COLE_O_IP_AQUI por ele, sem apagar o resto da linha
+#  Fica assim:   ACESSO_SSH=ssh root@203.0.113.10
+
+ACESSO_SSH=ssh root@COLE_O_IP_AQUI
+
+
+#  2 . SENHA ROOT DA VPS
+#  Na mesma tela: VPS, Configurações principais, Alterar senha do root
 #  Não anotou a sua? Gere uma nova ali e cole aqui
 #  Cole logo depois do  =  , sem aspas e sem espaço
 
 VPS_ROOT_SENHA=
 
 
-#  2 . SENHA DO PAINEL DO SEU AGENTE
+#  3 . SENHA DO PAINEL DO SEU AGENTE
 #  Esta você inventa. É com ela que você entra no painel pelo navegador
 #  De 12 a 64 caracteres
 #  Pode usar   letras, números e  . _ - ! @ % * + = : , ~ ^
