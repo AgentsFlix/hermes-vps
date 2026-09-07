@@ -101,7 +101,7 @@ exposição pública com conta gerenciada, o Hermes oferece OAuth pelo Nous Port
 
 ## Estado
 
-**Provado de ponta a ponta numa VPS real em 07/09/2026**, no caminho que o cliente compra: VPS
+**Provado de ponta a ponta numa VPS real em 07/09/2026** (nove fases), no caminho que o cliente compra: VPS
 Hostinger KVM 2 com o aplicativo "Hermes Agent" (Docker + Traefik), Hermes v0.21.0. As oito fases
 passaram, com prova em cada uma:
 
@@ -114,6 +114,7 @@ passaram, com prova em cada uma:
 | modelo | o agente respondeu "Modelo: gpt-5.6-terra; provedor: openai-codex" |
 | alma | o agente se apresentou pelo nome escolhido e disse quem é o dono |
 | hubs | as duas chaves no `.env`, as duas skills instaladas sem `--force`, as duas APIs em 200 |
+| telegram | o gateway passou a reportar `telegram connected` e o bot respondeu no celular |
 
 Duas coisas que só apareceram na VPS real e já estão corrigidas aqui: o modo template (o preflight
 antigo recusava a VPS por causa das portas do Traefik) e uma gravação de credencial que falhava em
