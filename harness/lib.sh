@@ -193,45 +193,29 @@ criar_acesso_esqueleto() {
     [ -f "$ACESSO_ARQ" ] && return 0
     umask 077
     cat > "$ACESSO_ARQ" <<'ARQ'
-# ======================================================================
 #  ACESSO À SUA VPS
-#
-#  Preencha as duas linhas soltas abaixo, salve (Cmd+S no Mac,
-#  Ctrl+S no Windows) e volte para o chat dizendo: Feito.
-# ======================================================================
+#  Preencha as duas linhas em destaque, salve e volte ao chat: Feito
 
 
-# ----------------------------------------------------------------------
-#  1. SENHA ROOT DA VPS
-#
-#  Onde pegar: painel da Hostinger, em VPS, Configurações principais,
-#  "Alterar senha do root". Se você não anotou a sua, gere uma nova ali
-#  e cole aqui.
-#
-#  Cole logo depois do sinal de igual, sem aspas e sem espaço.
-# ----------------------------------------------------------------------
+#  1 . SENHA ROOT DA VPS
+#  No painel da Hostinger: VPS, Configurações principais, Alterar senha do root
+#  Não anotou a sua? Gere uma nova ali e cole aqui
+#  Cole logo depois do  =  , sem aspas e sem espaço
 
 VPS_ROOT_SENHA=
 
 
-# ----------------------------------------------------------------------
-#  2. SENHA DO PAINEL DO HERMES
-#
-#  Esta você inventa. É com ela que você vai entrar no painel do seu
-#  agente, pelo navegador.
-#
-#  De 12 a 64 caracteres.
-#  Pode usar:  letras, números e  . _ - ! @ % * + = : , ~ ^
-#  Não pode:   espaço, aspas, $, #, barra invertida ou crase.
-# ----------------------------------------------------------------------
+#  2 . SENHA DO PAINEL DO SEU AGENTE
+#  Esta você inventa. É com ela que você entra no painel pelo navegador
+#  De 12 a 64 caracteres
+#  Pode usar   letras, números e  . _ - ! @ % * + = : , ~ ^
+#  Não pode    espaço, aspas, $, #, barra invertida, crase
 
 PAINEL_SENHA=
 
 
-# ======================================================================
-#  Este arquivo fica no seu computador e fora do git. A senha do painel
-#  é apagada daqui assim que entra na VPS. Nenhum valor aparece no chat.
-# ======================================================================
+#  A senha do painel some daqui assim que entra na VPS
+#  Nenhum valor deste arquivo aparece no chat
 ARQ
 }
 

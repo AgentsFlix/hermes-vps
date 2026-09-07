@@ -25,38 +25,27 @@ case "${1:-}" in
         if [ ! -f "$CHAVES_ARQ" ]; then
             umask 077
             cat > "$CHAVES_ARQ" <<'ARQ'
-# ======================================================================
 #  AS DUAS CENTRAIS DE FERRAMENTAS DO SEU AGENTE
-#
-#  Preencha o que você tiver, salve e volte para o chat dizendo: Feito.
-#  Pode deixar uma em branco: essa central fica de fora e entra depois.
-# ======================================================================
+#  Preencha o que você tiver, salve e volte ao chat: Feito
+#  Pode deixar uma em branco. Ela entra depois, quando você quiser
 
 
-# ----------------------------------------------------------------------
-#  1. MATON  (apps: agenda, e-mail, planilha, CRM e outros)
-#
-#  Onde pegar: maton.ai, entre em Settings e depois API Keys.
-#  Cole a chave inteira logo depois do sinal de igual, sem aspas.
-# ----------------------------------------------------------------------
+#  1 . MATON      agenda, e-mail, planilha, CRM e outros apps
+#  Em maton.ai, entre em Settings e depois API Keys
+#  Cole a chave inteira logo depois do  =  , sem aspas
 
 MATON_API_KEY=
 
 
-# ----------------------------------------------------------------------
-#  2. ZERNIO  (redes sociais: publicar, agendar, ler comentários)
-#
-#  Onde pegar: zernio.com, entre em Settings e depois API.
-#  Cole a chave inteira logo depois do sinal de igual, sem aspas.
-# ----------------------------------------------------------------------
+#  2 . ZERNIO     redes sociais: publicar, agendar, ler comentários
+#  Em zernio.com, entre em Settings e depois API
+#  Cole a chave inteira logo depois do  =  , sem aspas
 
 ZERNIO_API_KEY=
 
 
-# ======================================================================
-#  Este arquivo fica no seu computador e fora do git. As chaves são
-#  apagadas daqui assim que entram na VPS, e só depois de conferidas.
-# ======================================================================
+#  As chaves somem daqui assim que entram na VPS, e só depois de conferidas
+#  Nenhum valor deste arquivo aparece no chat
 ARQ
         fi
         abrir_editor "$CHAVES_ARQ"

@@ -49,51 +49,30 @@ case "${1:-}" in
         if [ ! -f "$TELEGRAM_ARQ" ]; then
             umask 077
             cat > "$TELEGRAM_ARQ" <<'ARQ'
-# ======================================================================
 #  SEU AGENTE NO TELEGRAM
-#
-#  Preencha as duas linhas soltas abaixo, salve e volte para o chat
-#  dizendo: Feito.
-# ======================================================================
+#  Preencha as duas linhas em destaque, salve e volte ao chat: Feito
 
 
-# ----------------------------------------------------------------------
-#  1. TOKEN DO BOT
-#
-#  No Telegram, abra uma conversa com  @BotFather
-#    - mande  /newbot
-#    - escolha um nome (o que aparece na conversa)
-#    - escolha um usuário terminado em  bot
-#
-#  Ele responde com uma linha assim:
-#    8123456789:AAFxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#
-#  Copie essa linha inteira e cole depois do sinal de igual.
-# ----------------------------------------------------------------------
+#  1 . TOKEN DO BOT
+#  No Telegram, abra conversa com  @BotFather  e mande  /newbot
+#  Escolha um nome e um usuário terminado em  bot
+#  Ele devolve uma linha assim:   8123456789:AAFxxxxxxxxxxxxxxxxxxxxx
+#  Copie a linha inteira e cole logo depois do  =
 
 TELEGRAM_BOT_TOKEN=
 
 
-# ----------------------------------------------------------------------
-#  2. QUEM PODE FALAR COM O BOT
-#
-#  No Telegram, abra uma conversa com  @userinfobot  e mande  /start
-#  Ele responde com  Id: 123456789
-#
-#  Cole esse número aqui. É ele que autoriza você a conversar com o
-#  agente: quem não estiver nesta lista é ignorado.
-#
-#  Mais de uma pessoa? Separe por vírgula, sem espaço:
-#    123456789,987654321
-# ----------------------------------------------------------------------
+#  2 . QUEM PODE FALAR COM O BOT
+#  No Telegram, abra conversa com  @userinfobot  e mande  /start
+#  Ele responde   Id: 123456789
+#  Cole esse número aqui. Quem não estiver na lista é ignorado
+#  Mais de uma pessoa? Separe por vírgula:   123456789,987654321
 
 TELEGRAM_ALLOWED_USERS=
 
 
-# ======================================================================
-#  Este arquivo fica no seu computador e fora do git. O token é apagado
-#  daqui assim que o bot conecta. A lista de números fica, não é segredo.
-# ======================================================================
+#  O token some daqui assim que o bot conectar
+#  A lista de números fica: ela não é segredo
 ARQ
         fi
         abrir_editor "$TELEGRAM_ARQ"
