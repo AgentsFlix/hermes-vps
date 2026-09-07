@@ -7,7 +7,11 @@
   painel vai para a VPS pelo stdin do SSH e é apagada do arquivo; vive só em `/opt/hermes/.env`,
   com permissão `600`. A senha root fica no arquivo como credencial de gestão: o OpenSSH a lê
   por `SSH_ASKPASS` só para autorizar a chave, e nunca em argumento, log ou chat.
-- **Chave SSH**: gerada na sua máquina, sem passphrase, só para esta VPS.
+- **Chave SSH**: gerada na sua máquina, sem passphrase, só para esta VPS, e autorizada na VPS
+  usando a senha root uma única vez. Ela fica em `~/.ssh/hermes-vps` e **quem tiver esse arquivo
+  entra na sua VPS como administrador**. `bash harness/chave.sh mostrar` diz qual é e o que está
+  autorizado lá; `bash harness/chave.sh remover` tira o acesso daquele computador. O servidor
+  continua aceitando a senha root do hPanel como reserva.
 - **Conta do ChatGPT**: o Hermes entra por código de dispositivo. Você digita o código numa
   página da OpenAI, no seu navegador; o agente só vê a URL e o código, que expira em 15 minutos.
   Os tokens ficam em `/opt/data/auth.json` na VPS, do usuário `hermes`.

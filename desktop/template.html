@@ -33,6 +33,12 @@
   .nota{background:var(--card);border-left:3px solid var(--ciano);padding:12px 16px;border-radius:8px;color:var(--mudo);font-size:14px}
   footer{margin-top:48px;color:var(--mudo);font-size:13px;border-top:1px solid var(--borda);padding-top:16px}
   a{color:var(--ciano)}
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    td { padding: 12px 14px 12px 0; vertical-align: top; border-top: 1px solid var(--borda); line-height: 1.55; }
+    tr:first-child td { border-top: 0; }
+    td:first-child { width: 34%; white-space: nowrap; padding-right: 20px; }
+    td code { word-break: break-all; }
 </style>
 </head>
 <body>
@@ -65,6 +71,17 @@
       <li>Em <b>Chat</b>, converse. É o Hermes completo, rodando na sua VPS.</li>
       <li>Quer o Hermes no Telegram, WhatsApp ou Discord? Configure o canal em <b>API Keys</b>; o gateway já está rodando e passa a atender ali.</li>
     </ol>
+  </section>
+
+  <section>
+    <h2>As três chaves da sua VPS, e onde cada uma está</h2>
+    <p class="meta">Guarde isto. É o que dá acesso ao seu servidor.</p>
+    <table>
+      <tr><td><b>Senha do painel</b></td><td>A que você escolheu. Entra em <code>{{URL}}</code> com o usuário <b>{{USUARIO}}</b>. Vive só na VPS.</td></tr>
+      <tr><td><b>Chave SSH</b></td><td>Criada no seu computador durante a instalação, só para esta VPS:<br><code>{{SSH_KEY}}</code><br>Impressão digital: <code>{{SSH_FP}}</code><br>É ela que o seu agente usa para operar a VPS. Quem tiver esse arquivo entra como administrador. Trocou de computador, refaça a instalação para autorizar a nova.</td></tr>
+      <tr><td><b>Senha root</b></td><td>A do painel da Hostinger. Continua valendo como reserva e ficou guardada em <code>config/acesso.local</code>, na pasta do harness. Dá para trocar a qualquer momento no hPanel.</td></tr>
+    </table>
+    <p class="nota">Vai parar de usar este computador? Peça ao seu agente: "remova a minha chave SSH da VPS". Depois disso o acesso volta a ser só pela senha root do hPanel.</p>
   </section>
 
   <section>

@@ -68,7 +68,9 @@ bash harness/70-telegram.sh roteiro        # bot do @BotFather e Id do @userinfo
 - **Um bot no Telegram** que só conversa com quem você autorizou, para falar com o agente do
   celular sem abrir o painel.
 - **Hermes Desktop** pode conectar nessa VPS (Settings → Gateways → Remote gateway).
-- **Pasta `Meu Hermes` no Desktop** com a página de acesso, os primeiros passos e os comandos.
+- **Pasta `Meu Hermes` no Desktop** com a página de acesso, os primeiros passos, os comandos e a
+  tabela das três chaves da sua VPS: senha do painel, chave SSH (o arquivo, no seu computador) e
+  senha root de reserva.
 - **Operação por comando:** `status`, `logs`, `atualizar` (com backup antes), `backup`, `senha`.
 
 Prefere não expor nada na internet? `MODO=tunel` no config: só a porta 22 fica aberta e o painel
@@ -83,7 +85,7 @@ CLAUDE.md              importa AGENTS.md para o Claude Code
 harness/configurar.sh  bootstrap: lê "ssh root@IP", grava o config, abre o arquivo das senhas
 harness/00-preflight.sh, 05-senha.sh, 10-instalar.sh, 20-verificar.sh, 30-desktop.sh   instalação
 harness/40-modelo.sh, 50-alma.sh, 60-hubs.sh, 70-telegram.sh                            onboarding
-harness/status.sh, logs.sh, atualizar.sh, backup.sh, senha.sh     operação (rodam na VPS por SSH)
+harness/status.sh, logs.sh, atualizar.sh, backup.sh, senha.sh, chave.sh   operação (por SSH)
 harness/remoto/        o que vai para /opt/hermes na VPS: instalar-vps.sh, compose.yml, Caddyfile, bin/
 alma/                  os templates do SOUL.md e do USER.md; só os cinco campos mudam
 desktop/template.html  a página gerada no Desktop

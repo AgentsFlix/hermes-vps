@@ -35,7 +35,10 @@ Tudo o que a instalação precisa está neste repositório. **Use só os scripts
    estão em `docs/decisoes.md`.
 5. **Na máquina do usuário você só cria:** a chave SSH em `~/.ssh/hermes-vps`, os arquivos de
    `config/` e a pasta `Meu Hermes` no Desktop.
-6. **Gate humano é humano.** Onde o script pede `--confirmado`, só rode depois que o usuário
+6. **Nunca esconda do usuário o que dá acesso ao servidor dele.** A chave SSH é criada no
+   computador dele, sem senha de proteção, e vale como administrador. Isso se diz na entrega, com
+   o caminho do arquivo, não se deixa implícito.
+7. **Gate humano é humano.** Onde o script pede `--confirmado`, só rode depois que o usuário
    disser que fez a parte dele. Você não consegue verificar isso por comando.
 
 ## Procedimento
@@ -209,6 +212,12 @@ Feche pedindo ao usuário para abrir o bot no Telegram e mandar um oi.
 Diga ao usuário, nesta ordem:
 
 1. A URL do painel e o usuário (`PAINEL_USUARIO`, padrão `admin`). A senha é a que ele digitou.
+2. **As três chaves da VPS dele, e onde cada uma está.** Ele acabou de ganhar um servidor e não
+   sabe o que dá acesso a ele. Rode `bash harness/chave.sh mostrar` e explique: a senha do painel
+   (só na VPS), a **chave SSH que o harness criou no computador dele** (o arquivo, e que quem o
+   tiver entra como administrador) e a senha root do hPanel, que continua valendo como reserva e
+   ficou em `config/acesso.local`. Diga que a mesma tabela está na página `Meu Hermes`, no Desktop.
+   Se ele for parar de usar aquele computador: `bash harness/chave.sh remover`.
 2. **Chat**: o Hermes já responde pela assinatura dele, com o nome e o tom que ele escolheu.
    Sugira o primeiro pedido: uma das três tarefas da primeira semana.
 3. Maton e Zernio: peça "faça o inventário de leitura do Maton" ou "liste minhas contas no
@@ -230,6 +239,8 @@ Diga ao usuário, nesta ordem:
 | "trocar uma chave do Maton ou do Zernio" | `bash harness/60-hubs.sh criar` → usuário cola → `aplicar` |
 | "o bot do Telegram parou" | `bash harness/70-telegram.sh provar`; se estiver em erro, `bash harness/logs.sh 200` |
 | "trocar o bot do Telegram / liberar outra pessoa" | `bash harness/70-telegram.sh criar` → usuário cola → `aplicar` |
+| "qual é a minha chave SSH?" / "quem tem acesso à VPS?" | `bash harness/chave.sh mostrar` |
+| "vou trocar de computador" / "tira o acesso daqui" | `bash harness/chave.sh remover` (a senha root do hPanel continua valendo) |
 | "refaz a página do Desktop" | `bash harness/30-desktop.sh` |
 
 ## Quando algo falha
