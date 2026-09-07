@@ -4,6 +4,16 @@
 source "$(dirname "$0")/lib.sh"
 carregar_config
 carregar_estado
+if [ "${TEMPLATE:-0}" = 1 ]; then
+    log "modo template: subindo só os scripts de operação para $REMOTO_DIR/bin"
+    vps "mkdir -p $REMOTO_DIR/bin"
+    enviar "$RAIZ/harness/remoto/bin/." "$SSH_USER@$VPS_HOST:$REMOTO_DIR/bin/"
+    vps "chmod 755 $REMOTO_DIR/bin/*.sh"
+    log "fechando a porta do painel publicada no host (HTTP puro, aberta na internet); o Traefik continua servindo em $URL"
+    vps "bash $REMOTO_DIR/bin/fechar-porta.sh" || morrer "não consegui fechar a porta publicada. Veja: bash harness/logs.sh"
+    gravar_estado INSTALADO_EM "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    echo; ok "PRONTO (modo template). Próximo passo: bash harness/20-verificar.sh"; exit 0
+fi
 validar_senha_arquivo || morrer "corrija a senha do painel antes: bash harness/05-senha.sh criar"
 
 log "enviando harness/remoto para $SSH_USER@$VPS_HOST:$REMOTO_DIR/harness"

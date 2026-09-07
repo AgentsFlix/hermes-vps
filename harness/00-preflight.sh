@@ -74,10 +74,19 @@ echo "PORTA443=$(ss -ltn 2>/dev/null | awk '$4 ~ /:443$/' | wc -l)"
 echo "MEM_MB=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)"
 echo "DISCO_LIVRE_GB=$(df -BG / | awk 'NR==2{print $4}' | tr -d G)"
 echo "HERMES_JA=$([ -f /opt/hermes/compose.yml ] && echo 1 || echo 0)"
+TC="$(docker ps --format '{{.Names}} {{.Image}}' 2>/dev/null | awk '/hermes-agent/{print $1; exit}')"
+echo "TEMPLATE_CONTAINER=$TC"
+if [ -n "$TC" ]; then
+  echo "TEMPLATE_HOST=$(docker inspect "$TC" --format '{{range $k,$v := .Config.Labels}}{{$k}}={{$v}}{{"\n"}}{{end}}' | sed -n 's/^traefik\.http\.routers\..*\.rule=.*Host(`\([^`]*\)`).*/\1/p' | head -1)"
+  echo "TEMPLATE_DIR=$(docker inspect "$TC" --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}')"
+  echo "TEMPLATE_VERSAO=$(docker exec "$TC" hermes --version 2>/dev/null | head -1 | sed -E 's/.*v([0-9.]+).*/\1/')"
+  echo "TEMPLATE_USUARIO=$(sed -n 's/^ADMIN_USERNAME=//p' "$(docker inspect "$TC" --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}')/.env" 2>/dev/null | head -1)"
+  echo "TEMPLATE_PUB=$(docker port "$TC" 2>/dev/null | wc -l)"
+fi
 REMOTO
 )"
 # shellcheck disable=SC2086
-eval "$(printf '%s\n' "$sonda" | grep -E '^[A-Z_0-9]+=' | sed 's/^/S_/')"
+eval "$(printf '%s\n' "$sonda" | grep -E '^[A-Z_0-9]+=' | sed "s/'/'\\\\''/g; s/^\([A-Z_0-9]*\)=\(.*\)$/S_\1='\2'/")"   # valores com espaço (ex.: "Docker version 29.7.2") entram entre aspas
 
 [ "${S_ROOT:-0}" = 1 ] || morrer "o usuário SSH precisa ser root (ou ter sudo sem senha; este harness usa root)"
 case "${S_OS_ID:-}" in
@@ -91,9 +100,20 @@ ok "IP público da VPS: $S_IP_PUBLICO"
 if [ "$S_DOCKER" = nao ]; then log "Docker não instalado: o instalador instala"; else ok "Docker presente: $S_DOCKER (compose $S_COMPOSE)"; fi
 [ "$S_HERMES_JA" = 1 ] && aviso "já existe /opt/hermes/compose.yml na VPS: a instalação vai atualizar sem apagar dados"
 
+# 5b. template da Hostinger (Hermes já instalado pela plataforma, atrás do Traefik)
+TEMPLATE=0
+if [ "$S_HERMES_JA" = 0 ] && [ -n "${S_TEMPLATE_CONTAINER:-}" ] && [ "$(echo "$S_TEMPLATE_CONTAINER" | grep -c hermes)" = 1 ] && [ "$S_TEMPLATE_CONTAINER" != hermes ]; then
+    TEMPLATE=1
+    ok "TEMPLATE da Hostinger detectado: container $S_TEMPLATE_CONTAINER, Hermes ${S_TEMPLATE_VERSAO:-?}, painel em https://${S_TEMPLATE_HOST:-?}"
+    [ "${S_TEMPLATE_PUB:-0}" != 0 ] && aviso "o template publica a porta do painel no host, em HTTP puro e aberta na internet; o instalador (modo template) fecha isso"
+    log "modo template: o harness NÃO instala Docker, Hermes nem Caddy; só sobe os scripts de operação e faz o onboarding"
+fi
+
 # 6. hostname HTTPS
 HOSTNAME_TLS=""
-if [ "$MODO" = publico ]; then
+if [ "$TEMPLATE" = 1 ]; then
+    HOSTNAME_TLS="$S_TEMPLATE_HOST"; URL="https://$HOSTNAME_TLS"
+elif [ "$MODO" = publico ]; then
     if [ "${S_PORTA80:-0}" != 0 ] || [ "${S_PORTA443:-0}" != 0 ]; then
         if [ "$S_HERMES_JA" = 1 ]; then
             ok "portas 80/443 em uso pelo próprio Hermes (reinstalação)"
@@ -124,6 +144,11 @@ gravar_estado HOSTNAME_TLS "$HOSTNAME_TLS"
 gravar_estado URL "$URL"
 gravar_estado OS "${S_OS_ID}-${S_OS_VER}"
 gravar_estado PREFLIGHT_EM "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+gravar_estado TEMPLATE "$TEMPLATE"
+if [ "$TEMPLATE" = 1 ]; then
+    gravar_estado CONTAINER "$S_TEMPLATE_CONTAINER"; gravar_estado TEMPLATE_DIR "$S_TEMPLATE_DIR"
+    gravar_estado VERSAO "$S_TEMPLATE_VERSAO"; gravar_estado PAINEL_USUARIO_REAL "${S_TEMPLATE_USUARIO:-$PAINEL_USUARIO}"
+fi
 ok "estado gravado em $ESTADO"
 echo
-ok "PREFLIGHT OK. Próximo passo: bash harness/05-senha.sh validar"
+if [ "$TEMPLATE" = 1 ]; then ok "PREFLIGHT OK (modo template). Próximo passo: bash harness/10-instalar.sh"; else ok "PREFLIGHT OK. Próximo passo: bash harness/05-senha.sh validar"; fi

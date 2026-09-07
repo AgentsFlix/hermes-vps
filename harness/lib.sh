@@ -6,9 +6,9 @@
 set -euo pipefail
 
 RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-CONFIG_DIR="$RAIZ/config"
+CONFIG_DIR="${HERMES_VPS_CONFIG_DIR:-$RAIZ/config}"   # os testes apontam para um diretório próprio; o do usuário nunca é tocado
 CONFIG="$CONFIG_DIR/hermes-vps.env"
-CONFIG_EXEMPLO="$CONFIG_DIR/hermes-vps.env.example"
+CONFIG_EXEMPLO="$RAIZ/config/hermes-vps.env.example"
 ACESSO_ARQ="$CONFIG_DIR/acesso.local"   # o que o usuário cola: senha root da VPS e senha do painel
 ESTADO="$CONFIG_DIR/.estado"
 # shellcheck disable=SC2034  # usados pelos scripts que fazem source
@@ -216,10 +216,9 @@ campo_de() { sed -n "s/^$2=//p" "$1" 2>/dev/null | head -1 | tr -d '\r' | sed 's
 
 # Reinicia só o container do Hermes na VPS (relê config.yaml, .env e SOUL.md) e espera o painel.
 reiniciar_hermes() {
-    vps "cd $REMOTO_DIR && docker compose restart hermes >/dev/null 2>&1 && for _ in \$(seq 1 60); do curl -fsS --max-time 5 http://127.0.0.1:9119/api/status >/dev/null 2>&1 && exit 0; sleep 2; done; exit 1" \
-        || morrer "o Hermes não voltou depois do restart. Veja: bash harness/logs.sh"
+    vps "bash $REMOTO_DIR/bin/reiniciar.sh" >/dev/null || morrer "o Hermes não voltou depois do restart. Veja: bash harness/logs.sh"
 }
 
 # Roda o hermes DENTRO do container, como o usuário hermes (o shim da imagem já rebaixa root).
 # Uso: hermes_na_vps 'auth status openai-codex'
-hermes_na_vps() { vps "docker exec hermes hermes $*"; }
+hermes_na_vps() { vps "bash $REMOTO_DIR/bin/hermes.sh $*"; }

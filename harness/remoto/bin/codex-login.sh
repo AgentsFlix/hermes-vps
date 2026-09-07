@@ -6,16 +6,18 @@
 #   concluir  -> grava provider e modelo no config, reinicia o Hermes e prova o status
 #   status    -> `hermes auth status openai-codex`
 set -euo pipefail
+source "$(dirname "$0")/_alvo.sh"
+C="$(hermes_container)"
 LOG="${CODEX_LOG:-/opt/hermes/codex-login.log}"
 MODELO="${HERMES_MODELO_CODEX:-gpt-5.6-terra}"
 limpo() { sed -E 's/\x1b\[[0-9;?]*[a-zA-Z]//g' "$LOG" 2>/dev/null || true; }
 
 case "${1:-}" in
     iniciar)
-        docker inspect -f '{{.State.Status}}' hermes 2>/dev/null | grep -qx running || { echo "container hermes não está running" >&2; exit 1; }
+        docker inspect -f '{{.State.Status}}' "$C" 2>/dev/null | grep -qx running || { echo "container do Hermes não está running" >&2; exit 1; }
         rm -f "$LOG"
         # sem -t: o fluxo de device code não precisa de TTY e não faz pergunta nenhuma
-        nohup docker exec hermes hermes auth add openai-codex > "$LOG" 2>&1 &
+        nohup docker exec "$C" hermes auth add openai-codex > "$LOG" 2>&1 &
         echo "login iniciado (pid $!). Em ~8 s rode: codigo" ;;
     codigo)
         for _ in $(seq 1 20); do
@@ -38,14 +40,13 @@ case "${1:-}" in
         echo "AINDA ESPERANDO (${t}s). O usuário já digitou o código na página?"; exit 3 ;;
     concluir)
         limpo | grep -qE 'Saved .*credentials|Login successful' || { echo "o login não terminou; rode esperar" >&2; exit 1; }
-        docker exec hermes hermes config set model.provider openai-codex >/dev/null
-        docker exec hermes hermes config set model.default "$MODELO" >/dev/null
-        cd /opt/hermes && docker compose restart hermes >/dev/null 2>&1
-        for _ in $(seq 1 60); do curl -fsS --max-time 5 http://127.0.0.1:9119/api/status >/dev/null 2>&1 && break; sleep 2; done
+        docker exec "$C" hermes config set model.provider openai-codex >/dev/null
+        docker exec "$C" hermes config set model.default "$MODELO" >/dev/null
+        hermes_restart || { echo "o Hermes não voltou depois do restart" >&2; exit 1; }
         rm -f "$LOG"
-        echo "provider=$(docker exec hermes hermes config get model.provider 2>/dev/null | tail -1)"
-        echo "modelo=$(docker exec hermes hermes config get model.default 2>/dev/null | tail -1)"
-        docker exec hermes hermes auth status openai-codex ;;
-    status) docker exec hermes hermes auth status openai-codex ;;
+        echo "provider=$(docker exec "$C" hermes config get model.provider 2>/dev/null | tail -1)"
+        echo "modelo=$(docker exec "$C" hermes config get model.default 2>/dev/null | tail -1)"
+        docker exec "$C" hermes auth status openai-codex ;;
+    status) docker exec "$C" hermes auth status openai-codex ;;
     *) echo "uso: codex-login.sh iniciar|codigo|esperar [seg]|concluir|status"; exit 2 ;;
 esac

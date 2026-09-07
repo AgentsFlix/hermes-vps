@@ -2,7 +2,9 @@
 # Testes locais do harness: sintaxe, shellcheck (se houver docker), compose, Caddyfile, página.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-TMP=tests/.tmp; mkdir -p "$TMP"
+TMP=tests/.tmp; mkdir -p "$TMP/config"
+# NUNCA tocar em config/ do usuário: todo teste usa um config isolado
+export HERMES_VPS_CONFIG_DIR="$PWD/$TMP/config"; CFG="$HERMES_VPS_CONFIG_DIR"
 falhas=0
 passo() { printf '\n== %s\n' "$*"; }
 
@@ -34,7 +36,7 @@ fi
 passo "página do desktop (modo publico e tunel)"
 for modo in publico tunel; do
     mkdir -p "$TMP/cfg-$modo"
-    cat > config/hermes-vps.env <<CFG
+    cat > $CFG/hermes-vps.env <<CFG
 VPS_HOST=203.0.113.10
 SSH_USER=root
 SSH_PORT=22
@@ -44,7 +46,7 @@ DOMINIO=
 PAINEL_USUARIO=admin
 CFG
     if [ "$modo" = publico ]; then url="https://srv000000.hstgr.cloud"; else url="http://localhost:9119"; fi
-    printf 'IP_PUBLICO=203.0.113.10\nHOSTNAME_TLS=srv000000.hstgr.cloud\nURL=%s\nVERSAO=0.21.0\n' "$url" > config/.estado
+    printf 'IP_PUBLICO=203.0.113.10\nHOSTNAME_TLS=srv000000.hstgr.cloud\nURL=%s\nVERSAO=0.21.0\n' "$url" > $CFG/.estado
     HERMES_VPS_SEM_ABRIR=1 bash harness/30-desktop.sh "$TMP/desktop-$modo" >/dev/null
     html="$TMP/desktop-$modo/Meu Hermes.html"
     grep -q '{{' "$html" && { echo "FALHA: placeholder sobrou ($modo)"; falhas=$((falhas+1)); }
@@ -52,31 +54,31 @@ CFG
     if [ "$modo" = tunel ]; then ls "$TMP/desktop-$modo/" | grep -q "túnel" && echo "ok atalho do túnel"; fi
     if [ "$modo" = publico ]; then grep -q "Modo túnel" "$html" && { echo "FALHA: bloco de túnel na página pública"; falhas=$((falhas+1)); }; fi
 done
-rm -f config/hermes-vps.env config/.estado
+rm -f $CFG/hermes-vps.env $CFG/.estado
 
 passo "configurar: parse do acesso SSH"
 for ent in "ssh root@203.0.113.10" "root@203.0.113.10" "203.0.113.10" "ssh -p 2222 root@203.0.113.10" "ssh root@203.0.113.10 -p 2222" "root@srv1.hstgr.cloud:2222"; do
     HERMES_VPS_SEM_ABRIR=1 bash harness/configurar.sh "$ent" >/dev/null 2>&1 || { echo "FALHA: configurar não aceitou: $ent"; falhas=$((falhas+1)); continue; }
-    h="$(sed -n 's/^VPS_HOST=//p' config/hermes-vps.env)"; p="$(sed -n 's/^SSH_PORT=//p' config/hermes-vps.env)"
+    h="$(sed -n 's/^VPS_HOST=//p' $CFG/hermes-vps.env)"; p="$(sed -n 's/^SSH_PORT=//p' $CFG/hermes-vps.env)"
     case "$ent" in *2222*) esp=2222 ;; *) esp=22 ;; esac
     if [ "$p" = "$esp" ] && [ -n "$h" ]; then echo "ok configurar: '$ent' → $h:$p"; else echo "FALHA: '$ent' → $h:$p"; falhas=$((falhas+1)); fi
 done
-[ -f config/acesso.local ] && [ "$(stat -f %Lp config/acesso.local 2>/dev/null || stat -c %a config/acesso.local)" = 600 ] && echo "ok acesso.local criado com 600"
-grep -q '^VPS_ROOT_SENHA=$' config/acesso.local && grep -q '^PAINEL_SENHA=$' config/acesso.local && echo "ok acesso.local com os dois campos vazios"
-rm -f config/hermes-vps.env config/hermes-vps.env.bak config/acesso.local
+[ -f $CFG/acesso.local ] && [ "$(stat -f %Lp $CFG/acesso.local 2>/dev/null || stat -c %a $CFG/acesso.local)" = 600 ] && echo "ok acesso.local criado com 600"
+grep -q '^VPS_ROOT_SENHA=$' $CFG/acesso.local && grep -q '^PAINEL_SENHA=$' $CFG/acesso.local && echo "ok acesso.local com os dois campos vazios"
+rm -f $CFG/hermes-vps.env $CFG/hermes-vps.env.bak $CFG/acesso.local
 
 passo "senha: validação sem eco"
-printf 'VPS_ROOT_SENHA=raiz-de-teste\nPAINEL_SENHA=curta\n' > config/acesso.local
+printf 'VPS_ROOT_SENHA=raiz-de-teste\nPAINEL_SENHA=curta\n' > $CFG/acesso.local
 if bash harness/05-senha.sh validar >/dev/null 2>&1; then echo "FALHA: aceitou senha curta"; falhas=$((falhas+1)); else echo "ok recusa curta"; fi
-printf 'VPS_ROOT_SENHA=raiz-de-teste\nPAINEL_SENHA=tem espaco dentro 123\n' > config/acesso.local
+printf 'VPS_ROOT_SENHA=raiz-de-teste\nPAINEL_SENHA=tem espaco dentro 123\n' > $CFG/acesso.local
 if bash harness/05-senha.sh validar >/dev/null 2>&1; then echo "FALHA: aceitou espaço"; falhas=$((falhas+1)); else echo "ok recusa espaço"; fi
-printf 'VPS_ROOT_SENHA=raiz-de-teste\nPAINEL_SENHA=Senha.valida-2026!\n' > config/acesso.local
+printf 'VPS_ROOT_SENHA=raiz-de-teste\nPAINEL_SENHA=Senha.valida-2026!\n' > $CFG/acesso.local
 saida="$(bash harness/05-senha.sh validar 2>&1)"
 echo "$saida" | grep -qE "Senha.valida|raiz-de-teste" && { echo "FALHA: ecoou senha"; falhas=$((falhas+1)); }
 echo "$saida" | grep -q "senha válida" && echo "ok aceita válida sem ecoar"
 bash harness/05-senha.sh limpar >/dev/null
-grep -q '^PAINEL_SENHA=$' config/acesso.local && grep -q '^VPS_ROOT_SENHA=raiz-de-teste$' config/acesso.local && echo "ok limpar apaga só a senha do painel"
-rm -f config/acesso.local
+grep -q '^PAINEL_SENHA=$' $CFG/acesso.local && grep -q '^VPS_ROOT_SENHA=raiz-de-teste$' $CFG/acesso.local && echo "ok limpar apaga só a senha do painel"
+rm -f $CFG/acesso.local
 
 passo "codex-login: parse do código no log (sem VPS)"
 printf 'Signing in to OpenAI Codex...\n\n  1. Open this URL in your browser:\n     \033[94mhttps://auth.openai.com/codex/device\033[0m\n\n  2. Enter this code:\n     \033[94mABCD-EFGHJ\033[0m\n\nWaiting for sign-in... (press Ctrl+C to cancel)\n' > "$TMP/codex.log"
@@ -95,24 +97,24 @@ grep -q '^OUTRA=1$' "$TMP/env-teste" && [ "$(grep -c '^MATON_API_KEY=' "$TMP/env
 printf 'PATH=/x\n' | HERMES_ENV_PATH="$TMP/env-teste" python3 "$TMP/env-add.py" >/dev/null 2>&1 && { echo "FALHA: aceitou PATH"; falhas=$((falhas+1)); } || echo "ok recusa nome proibido"
 
 passo "alma: template sem placeholder"
-printf 'DONO=Maria\nAGENTE=Sofia\nFAZ=cuida de uma clínica em Manaus\nTOM=informal\nTAREFAS=responder e-mail; agendar consulta; resumir reunião\n' > config/alma.env
+printf 'DONO=Maria\nAGENTE=Sofia\nFAZ=cuida de uma clínica em Manaus\nTOM=informal\nTAREFAS=responder e-mail; agendar consulta; resumir reunião\n' > $CFG/alma.env
 saida="$(bash harness/50-alma.sh mostrar)"
 echo "$saida" | grep -q '{{' && { echo "FALHA: sobrou placeholder"; falhas=$((falhas+1)); }
 echo "$saida" | grep -q '^- agendar consulta$' && echo "$saida" | grep -q 'Você é Sofia, o agente pessoal de Maria' && echo "ok SOUL.md preenchido" || { echo "FALHA: SOUL.md"; falhas=$((falhas+1)); }
-printf 'DONO=Maria\nAGENTE=Sofia\nFAZ=x\nTOM=gritando\nTAREFAS=a\n' > config/alma.env
+printf 'DONO=Maria\nAGENTE=Sofia\nFAZ=x\nTOM=gritando\nTAREFAS=a\n' > $CFG/alma.env
 bash harness/50-alma.sh validar >/dev/null 2>&1 && { echo "FALHA: aceitou TOM inválido"; falhas=$((falhas+1)); } || echo "ok recusa TOM inválido"
-rm -f config/alma.env
+rm -f $CFG/alma.env
 
 passo "hubs: validação das chaves sem eco"
-printf 'MATON_API_KEY=curta\nZERNIO_API_KEY=\n' > config/chaves.local
+printf 'MATON_API_KEY=curta\nZERNIO_API_KEY=\n' > $CFG/chaves.local
 bash harness/60-hubs.sh validar >/dev/null 2>&1 && { echo "FALHA: aceitou chave curta"; falhas=$((falhas+1)); } || echo "ok recusa curta"
-printf 'MATON_API_KEY=\nZERNIO_API_KEY=\n' > config/chaves.local
+printf 'MATON_API_KEY=\nZERNIO_API_KEY=\n' > $CFG/chaves.local
 rc=0; bash harness/60-hubs.sh validar >/dev/null 2>&1 || rc=$?; [ "$rc" -eq 3 ] && echo "ok duas vazias devolve 3" || { echo "FALHA: vazias"; falhas=$((falhas+1)); }
-printf 'MATON_API_KEY=maton_chave_de_teste_0123456789\nZERNIO_API_KEY=sk_zernio_chave_teste_0123456789\n' > config/chaves.local
+printf 'MATON_API_KEY=maton_chave_de_teste_0123456789\nZERNIO_API_KEY=sk_zernio_chave_teste_0123456789\n' > $CFG/chaves.local
 saida="$(bash harness/60-hubs.sh validar 2>&1)"
 echo "$saida" | grep -qE 'maton_chave|sk_zernio' && { echo "FALHA: ecoou chave"; falhas=$((falhas+1)); }
 echo "$saida" | grep -q 'chaves prontas' && echo "ok aceita válidas sem ecoar" || { echo "FALHA: válidas"; falhas=$((falhas+1)); }
-rm -f config/chaves.local
+rm -f $CFG/chaves.local
 
 passo "modelo: iniciar exige --confirmado"
 bash harness/40-modelo.sh iniciar >/dev/null 2>&1 && { echo "FALHA: iniciou sem confirmação"; falhas=$((falhas+1)); } || echo "ok gate do ChatGPT"

@@ -15,7 +15,7 @@ versao="${VERSAO:-não medida}"
 [ "$MODO" = tunel ] && tunel_arq="Abrir Meu Hermes (túnel)" || tunel_arq=""
 
 T_URL="$URL" T_HOST="$VPS_HOST" T_MODO="$MODO" T_SSH_CMD="$ssh_cmd" T_DATA="$data" \
-T_USUARIO="$PAINEL_USUARIO" T_VERSAO="$versao" T_REPO="$REPO_URL" T_HOSTNAME="${HOSTNAME_TLS:-$VPS_HOST}" \
+T_USUARIO="${PAINEL_USUARIO_REAL:-$PAINEL_USUARIO}" T_VERSAO="$versao" T_REPO="$REPO_URL" T_HOSTNAME="${HOSTNAME_TLS:-$VPS_HOST}" \
 T_TUNEL_ARQ="$tunel_arq" T_RAIZ="$RAIZ" \
 perl -0pe '
     if ($ENV{T_MODO} eq "publico") { s/<!--TUNEL-->.*?<!--\/TUNEL-->//gs } else { s/<!--PUBLICO-->.*?<!--\/PUBLICO-->//gs }
@@ -65,4 +65,4 @@ case "$so" in
 esac
 gravar_estado DESKTOP_EM "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo
-ok "DESKTOP PRONTO. Entregue ao usuário: painel $URL, usuário $PAINEL_USUARIO, senha a que ele digitou. Próximo: colar a chave do provedor de IA em API Keys, dentro do painel."
+ok "DESKTOP PRONTO. Painel $URL, usuário ${PAINEL_USUARIO_REAL:-$PAINEL_USUARIO}, senha a que o usuário digitou. Próximo: bash harness/40-modelo.sh roteiro"

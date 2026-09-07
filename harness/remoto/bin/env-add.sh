@@ -2,9 +2,11 @@
 # Grava (ou substitui) variáveis no .env do Hermes, dentro do volume, como o usuário hermes.
 # Roda NA VPS. As linhas KEY=valor chegam pelo stdin; nada é impresso além do nome e do tamanho.
 set -euo pipefail
+source "$(dirname "$0")/_alvo.sh"
+C="$(hermes_container)"
 [ -t 0 ] && { echo "as chaves têm que vir pelo stdin (o harness faz isso)" >&2; exit 2; }
-docker inspect -f '{{.State.Status}}' hermes 2>/dev/null | grep -qx running || { echo "container hermes não está running" >&2; exit 1; }
-docker exec -i --user hermes -e HERMES_ENV_PATH=/opt/data/.env hermes python3 - <<'PY'
+docker inspect -f '{{.State.Status}}' "$C" 2>/dev/null | grep -qx running || { echo "container do Hermes não está running" >&2; exit 1; }
+docker exec -i --user hermes -e HERMES_ENV_PATH=/opt/data/.env "$C" python3 - <<'PY'
 import os, re, sys
 env = os.environ.get("HERMES_ENV_PATH", "/opt/data/.env")
 atual = {}
