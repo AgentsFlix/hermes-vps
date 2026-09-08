@@ -33,6 +33,8 @@ else
     echo "(sem docker: pulando shellcheck, caddy e compose)"
 fi
 
+# A página calcula a impressão da chave. Testes não leem a chave real do operador.
+[ -f "$PWD/$TMP/ssh-test" ] || ssh-keygen -q -t ed25519 -N '' -f "$PWD/$TMP/ssh-test"
 passo "página do desktop (modo publico e tunel)"
 for modo in publico tunel; do
     mkdir -p "$TMP/cfg-$modo"
@@ -40,7 +42,7 @@ for modo in publico tunel; do
 VPS_HOST=203.0.113.10
 SSH_USER=root
 SSH_PORT=22
-SSH_KEY=~/.ssh/hermes-vps
+SSH_KEY=$PWD/$TMP/ssh-test
 MODO=$modo
 DOMINIO=
 PAINEL_USUARIO=admin

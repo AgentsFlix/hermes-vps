@@ -7,13 +7,13 @@
 #   status    -> `hermes auth status openai-codex`
 set -euo pipefail
 source "$(dirname "$0")/_alvo.sh"
-C="$(hermes_container)"
 LOG="${CODEX_LOG:-/opt/hermes/codex-login.log}"
 MODELO="${HERMES_MODELO_CODEX:-gpt-5.6-terra}"
 limpo() { sed -E 's/\x1b\[[0-9;?]*[a-zA-Z]//g' "$LOG" 2>/dev/null || true; }
 
 case "${1:-}" in
     iniciar)
+        C="$(hermes_container)"
         docker inspect -f '{{.State.Status}}' "$C" 2>/dev/null | grep -qx running || { echo "container do Hermes não está running" >&2; exit 1; }
         rm -f "$LOG"
         # sem -t: o fluxo de device code não precisa de TTY e não faz pergunta nenhuma
@@ -39,6 +39,7 @@ case "${1:-}" in
         done
         echo "AINDA ESPERANDO (${t}s). O usuário já digitou o código na página?"; exit 3 ;;
     concluir)
+        C="$(hermes_container)"
         limpo | grep -qE 'Added .*credential|Saved .*credentials|Login successful' || { echo "o login não terminou; rode esperar" >&2; exit 1; }
         docker exec "$C" hermes config set model.provider openai-codex >/dev/null
         docker exec "$C" hermes config set model.default "$MODELO" >/dev/null
@@ -47,6 +48,6 @@ case "${1:-}" in
         echo "provider=$(docker exec "$C" hermes config get model.provider 2>/dev/null | tail -1)"
         echo "modelo=$(docker exec "$C" hermes config get model.default 2>/dev/null | tail -1)"
         docker exec "$C" hermes auth status openai-codex ;;
-    status) docker exec "$C" hermes auth status openai-codex ;;
+    status) C="$(hermes_container)"; docker exec "$C" hermes auth status openai-codex ;;
     *) echo "uso: codex-login.sh iniciar|codigo|esperar [seg]|concluir|status"; exit 2 ;;
 esac
