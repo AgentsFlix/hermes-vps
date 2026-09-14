@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "repository": "AgentsFlix/hermes-vps",
+  "default_profile": "af-hermes",
+  "certification": "runtime_canary",
+  "delivery_flow": "task-worktree-branch-pr-tests-review-qa-merge-cleanup"
+}
